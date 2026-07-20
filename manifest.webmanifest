@@ -1,0 +1,18 @@
+{
+  "name": "Warito's Fitness",
+  "short_name": "Warito's",
+  "description": "Entrenamiento de fuerza y nutrición con seguimiento milimétrico.",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0e1420",
+  "theme_color": "#0e1420",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
