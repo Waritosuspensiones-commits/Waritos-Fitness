@@ -13,7 +13,7 @@
 </head>
 <body>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Manrope:wght@400;500;600;700;800&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Manrope:wght@400;500;600;700;800&family=Racing+Sans+One&family=Permanent+Marker&display=swap');
   :root{
     --ground:#0d1220;
     --glow-a:#ff6b3d2b; --glow-b:#3a9bff22; --glow-c:#8b5cf61f;
@@ -68,6 +68,12 @@
   .brand h1{font-family:var(--display);font-size:20px;margin:0;letter-spacing:-.4px;font-weight:800;color:var(--ember);
     background:linear-gradient(92deg,#ff9b5c,#ff6b3d 55%,#ff4d73);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;}
   .brand small{display:block;font-family:var(--sans);color:var(--faint);font-size:10.5px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;margin-top:1px;}
+  .wordmark{display:flex;flex-direction:column;line-height:1;gap:2px;}
+  .wm-row{display:flex;align-items:flex-start;gap:5px;}
+  .wm-warito{font-family:'Racing Sans One',var(--display);font-size:27px;font-weight:400;font-style:italic;color:#fff;-webkit-text-stroke:2.3px #141d2b;paint-order:stroke fill;text-shadow:2px 2px 0 #141d2b,3px 3px 0 rgba(0,0,0,.35);letter-spacing:.5px;line-height:.9;}
+  .wm-crown{width:15px;height:11px;fill:var(--ember);margin-top:-3px;filter:drop-shadow(0 1px 1px rgba(0,0,0,.4));}
+  .wm-num{font-family:'Racing Sans One',var(--display);font-style:italic;font-size:10px;color:#fff;background:linear-gradient(150deg,var(--ember),var(--ember-deep));padding:1px 5px;border-radius:5px;transform:translateY(1px);box-shadow:0 2px 7px -2px var(--ember);}
+  .wm-fitness{font-family:'Permanent Marker',cursive;font-size:16px;color:var(--ember);letter-spacing:.4px;transform:rotate(-3deg);transform-origin:left center;margin:1px 0 0 4px;text-shadow:1px 1px 0 rgba(0,0,0,.28);}
   .icon-btn{width:38px;height:38px;border-radius:11px;border:1px solid var(--line);background:var(--surface);color:var(--text);font-size:16px;cursor:pointer;display:grid;place-items:center;}
   .icon-btn:active{transform:scale(.94);}
 
@@ -237,10 +243,13 @@
 
   <header class="top">
     <div class="brand">
-      <div class="logo"><svg viewBox="0 0 24 24"><path d="M4 9v6M7 7.5v9M17 7.5v9M20 9v6M7.5 12h9"/></svg></div>
-      <div>
-        <h1>Warito's Fitness</h1>
-        <small id="todayLabel">—</small>
+      <div class="wordmark">
+        <div class="wm-row">
+          <span class="wm-warito">WARITO</span>
+          <svg class="wm-crown" viewBox="0 0 24 16" aria-hidden="true"><path d="M2 14h20l-2.2-10-5 4.2-2.8-6.4-2.8 6.4-5-4.2z"/></svg>
+          <span class="wm-num">#1</span>
+        </div>
+        <span class="wm-fitness">Fitness</span>
       </div>
     </div>
     <button class="icon-btn" id="themeBtn" title="Tema">◐</button>
@@ -248,7 +257,7 @@
 
   <!-- HOY -->
   <section class="screen active" id="scr-hoy">
-    <div class="eyebrow">Tu día</div>
+    <div class="eyebrow" id="todayLabel">Tu día</div>
     <h2 class="h2" id="hoyTitle">Hoy</h2>
     <div class="card">
       <div class="row between">
@@ -667,7 +676,7 @@
   function renderHoy(){
     var now=new Date();
     $("#todayLabel").textContent=esDate.format(now);
-    $("#hoyTitle").textContent=capitalize(now.toLocaleDateString("es-ES",{weekday:"long"}));
+    $("#hoyTitle").textContent=capitalize(now.toLocaleDateString("es-ES",{weekday:"long"}))+" 💪";
     var tk=trainingDow(), ring=$("#wkRing"); ring.classList.remove("teal");
     if(tk){
       var w=S.workouts[tk], sess=sessionFor(todayKey()), totalSets=0,doneSets=0;
