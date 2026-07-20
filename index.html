@@ -344,6 +344,7 @@
         <div class="frow"><label>Nivel</label><select id="fLevel"><option value="principiante">Principiante</option><option value="intermedio" selected>Intermedio</option><option value="avanzado">Avanzado</option></select></div>
         <div class="frow"><label>Objetivo</label><select id="fGoal"><option value="hipertrofia" selected>Hipertrofia (músculo)</option><option value="fuerza">Fuerza</option><option value="grasa">Pérdida de grasa</option></select></div>
         <div class="frow"><label>Enfoque</label><select id="fFocus"><option value="equilibrado" selected>Equilibrado</option><option value="pecho">Pecho</option><option value="espalda">Espalda</option><option value="hombros">Hombros</option><option value="brazos">Brazos</option><option value="piernas">Piernas</option><option value="gluteos">Glúteos</option></select></div>
+        <div class="frow"><label>Lugar</label><select id="fLoc"><option value="gym" selected>Gimnasio</option><option value="mancuernas">Casa (mancuernas)</option><option value="peso">Casa (sin equipo)</option></select></div>
         <div class="frow"><label>Días/semana</label><div class="seg" id="fDays"><button data-v="3">3</button><button data-v="4">4</button><button data-v="5" class="on">5</button></div></div>
       </div>
       <button class="btn primary" id="genDo">Generar mi rutina 💪</button>
@@ -385,75 +386,95 @@
   }
 
   /* ===== BIBLIOTECA DE EJERCICIOS ===== */
-  function E(name,muscle,comp,pm,sm,cues){return {name:name,muscle:muscle,comp:comp,pm:pm,sm:sm,cues:cues};}
+  function E(name,muscle,eq,comp,pm,sm,cues){return {name:name,muscle:muscle,eq:eq,comp:comp,pm:pm,sm:sm,cues:cues};}
   var LIB={
     pecho:[
-      E("Press de banca con barra","Pecho",true,["pecho"],["hombro","triceps"],["Escápulas retraídas y hundidas","Barra a la línea del pezón","Codos ~45°"]),
-      E("Press inclinado con mancuernas","Pecho superior",true,["pecho"],["hombro","triceps"],["Banco a 30°","Baja 2-3s","Aprieta arriba"]),
-      E("Press plano con mancuernas","Pecho",true,["pecho"],["hombro","triceps"],["Rango completo","No choques las mancuernas","Muñecas firmes"]),
-      E("Press en máquina","Pecho",true,["pecho"],["hombro","triceps"],["Espalda apoyada","Aprieta el pecho","Rango completo"]),
-      E("Aperturas en polea","Pecho",false,["pecho"],["hombro"],["Codo semiflexionado fijo","Estira al final","Sin impulso"]),
-      E("Fondos en paralelas","Pecho inferior",true,["pecho"],["triceps","hombro"],["Torso adelante","Baja controlado","No encojas hombros"])
+      E("Press de banca con barra","Pecho","barra",true,["pecho"],["hombro","triceps"],["Escápulas retraídas","Barra a la línea del pezón","Codos ~45°"]),
+      E("Press inclinado con mancuernas","Pecho superior","mancuerna",true,["pecho"],["hombro","triceps"],["Banco a 30°","Baja 2-3s","Aprieta arriba"]),
+      E("Press plano con mancuernas","Pecho","mancuerna",true,["pecho"],["hombro","triceps"],["Rango completo","No choques las mancuernas"]),
+      E("Aperturas con mancuernas","Pecho","mancuerna",false,["pecho"],["hombro"],["Codo semiflexionado fijo","Estira al final"]),
+      E("Press en máquina","Pecho","maquina",true,["pecho"],["hombro","triceps"],["Espalda apoyada","Aprieta el pecho"]),
+      E("Aperturas en polea","Pecho","maquina",false,["pecho"],["hombro"],["Codo fijo","Estira al final","Sin impulso"]),
+      E("Flexiones de brazos","Pecho","peso",true,["pecho"],["triceps","hombro"],["Cuerpo recto, core firme","Baja hasta casi tocar","Codos ~45°"]),
+      E("Flexiones declinadas (pies elevados)","Pecho superior","peso",true,["pecho"],["hombro","triceps"],["Pies en una silla","Baja controlado","Core apretado"]),
+      E("Fondos en paralelas","Pecho inferior","peso",true,["pecho"],["triceps","hombro"],["Torso adelante","Baja controlado"])
     ],
     espalda:[
-      E("Dominadas / Jalón al pecho","Espalda",true,["dorsales"],["biceps","hombro_post"],["Tira con los codos","Pecho arriba","Escápulas abajo"]),
-      E("Remo con barra","Espalda",true,["dorsales"],["biceps","trapecio","lumbar"],["Torso ~45°","Barra al ombligo","Espalda neutra"]),
-      E("Remo con mancuerna a 1 brazo","Dorsal",true,["dorsales"],["biceps"],["Codo pegado al costado","Aprieta arriba 1s","Apoya rodilla y mano"]),
-      E("Remo en máquina","Espalda",true,["dorsales"],["biceps","trapecio"],["Pecho al apoyo","Codos atrás y abajo","Aprieta escápulas"]),
-      E("Jalón agarre neutro","Dorsal",true,["dorsales"],["biceps"],["Tira al pecho","Codos hacia el cuerpo","Estira arriba"]),
-      E("Pullover en polea","Dorsal",false,["dorsales"],[],["Brazos casi rectos","Siente el dorsal","Sin arquear lumbar"])
+      E("Jalón al pecho (polea)","Espalda","maquina",true,["dorsales"],["biceps","hombro_post"],["Tira con los codos","Pecho arriba","Estira arriba"]),
+      E("Remo con barra","Espalda","barra",true,["dorsales"],["biceps","trapecio","lumbar"],["Torso ~45°","Barra al ombligo","Espalda neutra"]),
+      E("Remo en máquina","Espalda","maquina",true,["dorsales"],["biceps","trapecio"],["Pecho al apoyo","Codos atrás","Aprieta escápulas"]),
+      E("Remo con mancuerna a 1 brazo","Dorsal","mancuerna",true,["dorsales"],["biceps"],["Codo al costado","Aprieta arriba 1s","Apoya rodilla y mano"]),
+      E("Remo con mancuernas a 2 brazos","Espalda","mancuerna",true,["dorsales"],["biceps","trapecio"],["Torso inclinado","Lleva codos atrás"]),
+      E("Dominadas","Espalda","peso",true,["dorsales"],["biceps","hombro_post"],["Tira con los codos","Pecho arriba","Sin balanceo"]),
+      E("Remo invertido (barra baja o mesa)","Espalda","peso",true,["dorsales"],["biceps"],["Cuerpo recto","Lleva el pecho a la barra","Aprieta escápulas"]),
+      E("Superman","Lumbar · Espalda","peso",false,["dorsales"],["lumbar"],["Eleva brazos y piernas","Aprieta 1s","Sin tirón de cuello"])
     ],
     hombro:[
-      E("Press militar con mancuernas","Hombro",true,["hombro"],["triceps"],["Núcleo firme, sin arquear","No bloquees de golpe","Rango completo"]),
-      E("Press de hombro en máquina","Hombro",true,["hombro"],["triceps"],["Espalda apoyada","Rango completo","Sin bloqueo brusco"]),
-      E("Elevaciones laterales","Deltoide lateral",false,["hombro"],[],["Codo lidera","Sin balanceo","Baja lento 2s"]),
-      E("Elevación frontal","Deltoide frontal",false,["hombro"],[],["Sin balanceo","Controla la bajada","Hasta la altura del hombro"])
+      E("Press militar con mancuernas","Hombro","mancuerna",true,["hombro"],["triceps"],["Núcleo firme","No arquees","Rango completo"]),
+      E("Press Arnold con mancuernas","Hombro","mancuerna",true,["hombro"],["triceps"],["Rota las muñecas","Controla","Sin arquear"]),
+      E("Press de hombro en máquina","Hombro","maquina",true,["hombro"],["triceps"],["Espalda apoyada","Rango completo"]),
+      E("Elevaciones laterales","Deltoide lateral","mancuerna",false,["hombro"],[],["Codo lidera","Sin balanceo","Baja lento"]),
+      E("Elevación frontal","Deltoide frontal","mancuerna",false,["hombro"],[],["Sin balanceo","Controla la bajada"]),
+      E("Flexiones pica (pike push-ups)","Hombro","peso",true,["hombro"],["triceps"],["Cadera arriba en V","Corona hacia el piso","Empuja fuerte"])
     ],
     hombro_post:[
-      E("Face pull","Deltoide posterior",false,["hombro_post"],["trapecio"],["Tira hacia la frente","Rota externamente","Sin peso excesivo"]),
-      E("Pájaros / posterior en pec-deck","Deltoide posterior",false,["hombro_post"],[],["Codos altos","Aprieta atrás","Controla"])
+      E("Face pull (polea)","Deltoide posterior","maquina",false,["hombro_post"],["trapecio"],["Tira a la frente","Rota externamente"]),
+      E("Pájaros con mancuernas","Deltoide posterior","mancuerna",false,["hombro_post"],[],["Codos altos","Aprieta atrás","Controla"]),
+      E("Superman en Y","Deltoide posterior","peso",false,["hombro_post"],["trapecio"],["Brazos en Y","Aprieta atrás","Sin subir el cuello"])
     ],
     biceps:[
-      E("Curl con barra","Bíceps",false,["biceps"],["antebrazo"],["Codos fijos","Sin balanceo","Contrae arriba"]),
-      E("Curl martillo","Braquial",false,["biceps"],["antebrazo"],["Muñeca neutra","Controla la bajada","Un brazo por vez si hace falta"]),
-      E("Curl en banco inclinado","Bíceps",false,["biceps"],[],["Brazos atrás del cuerpo","Estira abajo","Sin mover el codo"]),
-      E("Curl predicador","Bíceps",false,["biceps"],[],["Codos apoyados","Rango completo","No rebotes abajo"])
+      E("Curl con barra","Bíceps","barra",false,["biceps"],["antebrazo"],["Codos fijos","Sin balanceo","Contrae arriba"]),
+      E("Curl con mancuernas","Bíceps","mancuerna",false,["biceps"],["antebrazo"],["Codos fijos","Supina al subir"]),
+      E("Curl martillo","Braquial","mancuerna",false,["biceps"],["antebrazo"],["Muñeca neutra","Controla la bajada"]),
+      E("Curl predicador","Bíceps","maquina",false,["biceps"],[],["Codos apoyados","No rebotes abajo"]),
+      E("Dominadas supinas (chin-up)","Bíceps","peso",true,["biceps"],["dorsales"],["Agarre supino","Sube con los bíceps","Baja controlado"])
     ],
     triceps:[
-      E("Extensión de tríceps en polea","Tríceps",false,["triceps"],[],["Codos pegados","Bloqueo suave abajo","Estira arriba"]),
-      E("Press francés","Tríceps",false,["triceps"],[],["Codos quietos","Baja a la frente","Controla"]),
-      E("Fondos en banco","Tríceps",true,["triceps"],["hombro"],["Codos hacia atrás","Baja controlado","No encojas hombros"]),
-      E("Extensión sobre la cabeza","Tríceps",false,["triceps"],[],["Estira arriba","Codos firmes","Rango completo"])
+      E("Extensión de tríceps en polea","Tríceps","maquina",false,["triceps"],[],["Codos pegados","Bloqueo abajo","Estira arriba"]),
+      E("Press francés con mancuernas","Tríceps","mancuerna",false,["triceps"],[],["Codos quietos","Baja a la frente"]),
+      E("Extensión sobre la cabeza","Tríceps","mancuerna",false,["triceps"],[],["Estira arriba","Codos firmes"]),
+      E("Fondos en silla/banco","Tríceps","peso",true,["triceps"],["hombro"],["Codos atrás","Baja controlado","No encojas hombros"]),
+      E("Flexiones diamante","Tríceps","peso",true,["triceps"],["pecho"],["Manos juntas","Codos pegados","Cuerpo recto"])
     ],
     cuadriceps:[
-      E("Sentadilla con barra","Cuádriceps",true,["cuadriceps"],["gluteos","isquios","lumbar"],["Baja al paralelo o más","Pecho arriba","Empuja el suelo"]),
-      E("Prensa de pierna","Cuádriceps",true,["cuadriceps"],["gluteos"],["Pies medios","No bloquees rodillas","Rango profundo"]),
-      E("Sentadilla búlgara","Cuádriceps · Glúteo",true,["cuadriceps"],["gluteos"],["Pie trasero elevado","Rodilla vertical","Torso levemente adelante"]),
-      E("Zancadas","Cuádriceps · Glúteo",true,["cuadriceps"],["gluteos"],["Paso largo","Torso erguido","Controla la bajada"]),
-      E("Extensión de cuádriceps","Cuádriceps",false,["cuadriceps"],[],["Pausa 1s arriba","Baja lento","Sin impulso"])
+      E("Sentadilla con barra","Cuádriceps","barra",true,["cuadriceps"],["gluteos","isquios","lumbar"],["Baja al paralelo o más","Pecho arriba","Empuja el suelo"]),
+      E("Prensa de pierna","Cuádriceps","maquina",true,["cuadriceps"],["gluteos"],["Pies medios","No bloquees rodillas","Rango profundo"]),
+      E("Extensión de cuádriceps","Cuádriceps","maquina",false,["cuadriceps"],[],["Pausa 1s arriba","Baja lento"]),
+      E("Sentadilla goblet con mancuerna","Cuádriceps","mancuerna",true,["cuadriceps"],["gluteos"],["Peso al pecho","Baja recto","Talones al piso"]),
+      E("Sentadilla búlgara","Cuádriceps · Glúteo","peso",true,["cuadriceps"],["gluteos"],["Pie trasero elevado","Rodilla vertical","Torso adelante"]),
+      E("Zancadas","Cuádriceps · Glúteo","peso",true,["cuadriceps"],["gluteos"],["Paso largo","Torso erguido","Baja controlado"]),
+      E("Sentadilla libre (peso corporal)","Cuádriceps","peso",true,["cuadriceps"],["gluteos"],["Pies al ancho de hombros","Baja al paralelo","Rodillas hacia afuera"]),
+      E("Sentadilla sissy","Cuádriceps","peso",false,["cuadriceps"],[],["Talones arriba","Inclina atrás","Controla"])
     ],
     isquios:[
-      E("Peso muerto rumano","Femoral · Glúteo",true,["isquios"],["gluteos","lumbar"],["Cadera atrás, barra pegada","Ligera flexión de rodilla","Siente el estiramiento"]),
-      E("Curl femoral tumbado","Femoral",false,["isquios"],[],["Cadera pegada al banco","Contrae fuerte","Rango completo"]),
-      E("Curl femoral sentado","Femoral",false,["isquios"],[],["Rango completo","Controla la bajada","Sin rebote"]),
-      E("Buenos días con barra","Femoral · Lumbar",true,["isquios"],["lumbar","gluteos"],["Espalda neutra","Cadera atrás","Rango cómodo"])
+      E("Peso muerto rumano","Femoral · Glúteo","barra",true,["isquios"],["gluteos","lumbar"],["Cadera atrás, barra pegada","Rodilla semiflexa","Siente el estiramiento"]),
+      E("Peso muerto rumano con mancuernas","Femoral","mancuerna",true,["isquios"],["gluteos","lumbar"],["Cadera atrás","Mancuernas pegadas","Espalda neutra"]),
+      E("Curl femoral tumbado","Femoral","maquina",false,["isquios"],[],["Cadera al banco","Contrae fuerte"]),
+      E("Curl femoral sentado","Femoral","maquina",false,["isquios"],[],["Rango completo","Sin rebote"]),
+      E("Curl nórdico","Femoral","peso",true,["isquios"],[],["Baja lo más lento posible","Cuerpo recto","Frená con las manos"]),
+      E("Puente femoral a una pierna","Femoral · Glúteo","peso",false,["isquios"],["gluteos"],["Talón cerca del glúteo","Sube la cadera","Aprieta arriba"])
     ],
     gluteos:[
-      E("Hip thrust con barra","Glúteo",true,["gluteos"],["isquios"],["Barbilla metida","Empuja con talones","Bloqueo arriba 1s"]),
-      E("Prensa a pies altos","Glúteo · Femoral",true,["gluteos"],["isquios"],["Pies altos y anchos","Rango profundo","Empuja con talones"]),
-      E("Patada de glúteo en polea","Glúteo",false,["gluteos"],[],["Aprieta arriba","Sin arquear lumbar","Controla"]),
-      E("Abducción en máquina","Glúteo medio",false,["gluteos"],[],["Torso levemente adelante","Aprieta afuera","Controla la vuelta"])
+      E("Hip thrust con barra","Glúteo","barra",true,["gluteos"],["isquios"],["Barbilla metida","Empuja con talones","Bloqueo arriba 1s"]),
+      E("Hip thrust con mancuerna","Glúteo","mancuerna",true,["gluteos"],["isquios"],["Mancuerna en la cadera","Empuja con talones","Aprieta arriba"]),
+      E("Prensa a pies altos","Glúteo · Femoral","maquina",true,["gluteos"],["isquios"],["Pies altos y anchos","Rango profundo"]),
+      E("Patada de glúteo en polea","Glúteo","maquina",false,["gluteos"],[],["Aprieta arriba","Sin arquear lumbar"]),
+      E("Puente de glúteo","Glúteo","peso",false,["gluteos"],["isquios"],["Empuja con talones","Aprieta 1s arriba","Costillas abajo"]),
+      E("Patada de glúteo (cuadrupedia)","Glúteo","peso",false,["gluteos"],[],["Espalda neutra","Sube el talón al techo","Sin arquear lumbar"])
     ],
     gemelos:[
-      E("Elevación de gemelos de pie","Gemelo",false,["gemelos"],[],["Máximo estiramiento abajo","Pausa arriba 1s","Rango completo"]),
-      E("Elevación de gemelos sentado","Gemelo (sóleo)",false,["gemelos"],[],["Pausa arriba","Estira abajo","Lento"])
+      E("Elevación de gemelos de pie","Gemelo","peso",false,["gemelos"],[],["Estira abajo","Pausa arriba 1s","Rango completo"]),
+      E("Elevación de gemelos sentado","Gemelo (sóleo)","maquina",false,["gemelos"],[],["Pausa arriba","Estira abajo"]),
+      E("Elevación de gemelos a una pierna","Gemelo","peso",false,["gemelos"],[],["A una pierna","Máximo estiramiento","Pausa arriba"])
     ],
     core:[
-      E("Plancha / Ab wheel","Core",false,["abdominales"],["oblicuos"],["Núcleo apretado","Glúteos activos","No hundas la lumbar"]),
-      E("Elevación de piernas colgado","Abdomen",false,["abdominales"],[],["Sin balanceo","Controla la bajada","Retroversión de cadera"]),
-      E("Crunch en polea","Abdomen",false,["abdominales"],[],["Redondea la espalda","Aprieta el abdomen","Controla"])
+      E("Plancha / Ab wheel","Core","peso",false,["abdominales"],["oblicuos"],["Núcleo apretado","Glúteos activos","No hundas la lumbar"]),
+      E("Elevación de piernas","Abdomen","peso",false,["abdominales"],[],["Sin balanceo","Controla la bajada","Retroversión de cadera"]),
+      E("Crunch abdominal","Abdomen","peso",false,["abdominales"],[],["Redondea la espalda","Aprieta el abdomen","Sin tirar del cuello"]),
+      E("Mountain climbers","Core","peso",false,["abdominales"],["oblicuos"],["Cadera baja","Rodillas al pecho","Ritmo constante"])
     ]
   };
+  var ALLOWED={gym:["barra","maquina","mancuerna","peso"],mancuernas:["mancuerna","peso"],peso:["peso"]};
 
   var GROUP_LABEL={pecho:"Pecho",espalda:"Espalda",hombro:"Hombro",hombro_post:"Hombro post.",biceps:"Bíceps",triceps:"Tríceps",cuadriceps:"Cuádriceps",isquios:"Femoral",gluteos:"Glúteos",gemelos:"Gemelos",core:"Core"};
   var SCHEME={
@@ -473,8 +494,11 @@
     var scheme=SCHEME[p.goal]||SCHEME.hipertrofia;
     var days=DOWMAP[p.days]?p.days:5;
     var split=SPLITS[days], focusG=FOCUSMAP[p.focus]||[];
+    var allow=ALLOWED[p.loc]||ALLOWED.gym;
+    var FLIB={};
+    Object.keys(LIB).forEach(function(g){FLIB[g]=LIB[g].filter(function(e){return allow.indexOf(e.eq)>=0;});if(!FLIB[g].length)FLIB[g]=LIB[g];});
     var gp={};
-    function pick(g){var arr=LIB[g];var i=(gp[g]||0)%arr.length;gp[g]=(gp[g]||0)+1;return arr[i];}
+    function pick(g){var arr=FLIB[g];var i=(gp[g]||0)%arr.length;gp[g]=(gp[g]||0)+1;return arr[i];}
     function mkEx(lib){
       var setsN=(lib.comp?scheme.compSets:scheme.isoSets)+(p.level==="avanzado"?1:p.level==="principiante"?-1:0);
       setsN=Math.max(2,Math.min(5,setsN));
@@ -498,7 +522,17 @@
     var adj=p.goal==="grasa"?0.8:p.goal==="fuerza"?1.08:1.12;
     return {kcal:Math.round(tdee*adj/10)*10, protein:Math.round(2*w), bmi:Math.round(w/Math.pow(h/100,2)*10)/10};
   }
-  function defaultProfile(){return {weight:"",height:"",age:"",sex:"m",level:"intermedio",goal:"hipertrofia",focus:"equilibrado",days:5};}
+  function defaultProfile(){return {weight:"",height:"",age:"",sex:"m",level:"intermedio",goal:"hipertrofia",focus:"equilibrado",days:5,loc:"gym"};}
+  function scaleFood(str,f){var m=str.match(/^(\d+)\s*(g|ml)\b([\s\S]*)$/i);if(m){var n=Math.max(5,Math.round(parseInt(m[1],10)*f/5)*5);return n+m[2]+m[3];}return str;}
+  function scaleMeals(target){
+    var week=seedMeals();
+    Object.keys(week).forEach(function(d){
+      var meals=week[d],tot=0;meals.forEach(function(m){tot+=m.kcal;});
+      var f=tot?target/tot:1;
+      meals.forEach(function(m){m.kcal=Math.round(m.kcal*f);m.p=Math.round(m.p*f);m.c=Math.round(m.c*f);m.f=Math.round(m.f*f);m.foods=m.foods.map(function(x){return scaleFood(x,f);});});
+    });
+    return week;
+  }
 
   /* ===== MAPA MUSCULAR ===== */
   var MUSCLE_LABEL={hombro:"Hombros",pecho:"Pecho",biceps:"Bíceps",antebrazo:"Antebrazos",abdominales:"Abdomen",oblicuos:"Oblicuos",cuadriceps:"Cuádriceps",trapecio:"Trapecio",hombro_post:"Deltoide post.",dorsales:"Espalda / Dorsales",triceps:"Tríceps",lumbar:"Lumbares",gluteos:"Glúteos",isquios:"Femoral",gemelos:"Gemelos"};
@@ -639,6 +673,7 @@
       card.innerHTML='<div class="h3" style="margin-bottom:8px">Tu perfil</div><div class="prof">'+
         '<span class="pill">'+p.days+' días/sem</span>'+
         '<span class="pill ember">'+({hipertrofia:"Hipertrofia",fuerza:"Fuerza",grasa:"Def. grasa"}[p.goal]||p.goal)+'</span>'+
+        '<span class="pill">'+({gym:"🏋️ Gimnasio",mancuernas:"🏠 Mancuernas",peso:"🏠 Sin equipo"}[p.loc]||"🏋️ Gimnasio")+'</span>'+
         (p.focus&&p.focus!=="equilibrado"?'<span class="pill">Enfoque: '+p.focus+'</span>':'')+
         (p.weight?'<span class="pill tnum">'+p.weight+' kg</span>':'')+
         (p.bmi?'<span class="pill tnum">IMC '+p.bmi+'</span>':'')+
@@ -755,7 +790,7 @@
   function openGen(){
     var p=S.profile||defaultProfile();
     $("#fWeight").value=p.weight||"";$("#fHeight").value=p.height||"";$("#fAge").value=p.age||"";
-    $("#fLevel").value=p.level||"intermedio";$("#fGoal").value=p.goal||"hipertrofia";$("#fFocus").value=p.focus||"equilibrado";
+    $("#fLevel").value=p.level||"intermedio";$("#fGoal").value=p.goal||"hipertrofia";$("#fFocus").value=p.focus||"equilibrado";$("#fLoc").value=p.loc||"gym";
     setSeg("fSex",p.sex||"m");setSeg("fDays",p.days||5);
     $("#genModal").classList.add("on");
   }
@@ -764,9 +799,9 @@
   $("#genClose").onclick=closeGen;
   $("#genModal").onclick=function(e){if(e.target===this)closeGen();};
   $("#genDo").onclick=function(){
-    var p={weight:$("#fWeight").value.trim(),height:$("#fHeight").value.trim(),age:$("#fAge").value.trim(),sex:readSeg("fSex")||"m",level:$("#fLevel").value,goal:$("#fGoal").value,focus:$("#fFocus").value,days:parseInt(readSeg("fDays")||"5",10)};
+    var p={weight:$("#fWeight").value.trim(),height:$("#fHeight").value.trim(),age:$("#fAge").value.trim(),sex:readSeg("fSex")||"m",level:$("#fLevel").value,goal:$("#fGoal").value,focus:$("#fFocus").value,loc:$("#fLoc").value,days:parseInt(readSeg("fDays")||"5",10)};
     var nut=computeNutrition(p);
-    if(nut){p.kcal=nut.kcal;p.protein=nut.protein;p.bmi=nut.bmi;}
+    if(nut){p.kcal=nut.kcal;p.protein=nut.protein;p.bmi=nut.bmi;S.meals=scaleMeals(nut.kcal);}
     S.workouts=genRoutine(p);S.profile=p;
     S.sessions=S.sessions.filter(function(s){return s.date!==todayKey();}); // rutina nueva: reinicia la sesión de hoy
     entSel=trainingDays()[0]||"lun";save();closeGen();renderEnt();renderHoy();
