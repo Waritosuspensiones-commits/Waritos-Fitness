@@ -3,6 +3,7 @@
   :root{
     --ground:#0d1220;
     --glow-a:#ff6b3d2b; --glow-b:#3a9bff22; --glow-c:#8b5cf61f;
+    --cf-base:#111216; --cf1:#181a20; --cf2:#23262f;
     --surface:#151f30; --surface-2:#1c2939; --surface-3:#26374e;
     --line:#2b3c53; --line-soft:#22314553;
     --text:#eaf0f7; --muted:#8ea0b6; --faint:#5f7189;
@@ -19,6 +20,7 @@
   @media (prefers-color-scheme: light){
     :root{
       --ground:#eef2f7; --glow-a:#ff6b3d20; --glow-b:#3a9bff18; --glow-c:#8b5cf615;
+      --cf-base:#d9dce2; --cf1:#ccd0d8; --cf2:#e8ebf1;
       --surface:#ffffff; --surface-2:#f4f7fb; --surface-3:#e9eff6;
       --line:#d5dfea; --line-soft:#dbe4ee88;
       --text:#132033; --muted:#5a6b81; --faint:#8394a8;
@@ -27,7 +29,7 @@
     }
   }
   :root[data-theme="dark"]{--ground:#0d1220;--glow-a:#ff6b3d2b;--glow-b:#3a9bff22;--glow-c:#8b5cf61f;--surface:#151f30;--surface-2:#1c2939;--surface-3:#26374e;--line:#2b3c53;--text:#eaf0f7;--muted:#8ea0b6;--faint:#5f7189;--teal:#2fd4a7;--teal-soft:#2fd4a722;--warn:#ffc64b;--warn-soft:#ffc64b22;--ember-2:#ff9b73;--body:#2c3e56;--musc:#3a4f6c;--shadow:0 12px 34px -16px #000000aa;}
-  :root[data-theme="light"]{--ground:#eef2f7;--glow-a:#ff6b3d20;--glow-b:#3a9bff18;--glow-c:#8b5cf615;--surface:#ffffff;--surface-2:#f4f7fb;--surface-3:#e9eff6;--line:#d5dfea;--text:#132033;--muted:#5a6b81;--faint:#8394a8;--teal:#12b98a;--teal-soft:#12b98a1f;--warn:#c98a00;--warn-soft:#e6a5001f;--ember-2:#ff8a5c;--body:#c4d2e0;--musc:#aebfd2;--shadow:0 12px 30px -18px #33415533;}
+  :root[data-theme="light"]{--ground:#eef2f7;--glow-a:#ff6b3d20;--glow-b:#3a9bff18;--glow-c:#8b5cf615;--cf-base:#d9dce2;--cf1:#ccd0d8;--cf2:#e8ebf1;--surface:#ffffff;--surface-2:#f4f7fb;--surface-3:#e9eff6;--line:#d5dfea;--text:#132033;--muted:#5a6b81;--faint:#8394a8;--teal:#12b98a;--teal-soft:#12b98a1f;--warn:#c98a00;--warn-soft:#e6a5001f;--ember-2:#ff8a5c;--body:#c4d2e0;--musc:#aebfd2;--shadow:0 12px 30px -18px #33415533;}
 
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
   html,body{margin:0;padding:0;}
@@ -36,14 +38,17 @@
   @media (min-width:480px){#app{border-left:1px solid var(--line-soft);border-right:1px solid var(--line-soft);}}
 
   .aurora{position:fixed;top:0;left:50%;transform:translateX(-50%);width:100%;max-width:var(--maxw);height:100vh;z-index:0;pointer-events:none;overflow:hidden;
-    background:
-      radial-gradient(38% 30% at 14% 8%, var(--glow-a), transparent 60%),
-      radial-gradient(44% 34% at 88% 4%, var(--glow-b), transparent 62%),
-      radial-gradient(52% 44% at 82% 98%, var(--glow-c), transparent 64%),
-      radial-gradient(40% 30% at 6% 88%, var(--glow-a), transparent 62%);
-    animation:drift 26s ease-in-out infinite alternate;}
-  @keyframes drift{0%{transform:translateX(-50%) translateY(0) scale(1);}100%{transform:translateX(-50%) translateY(-2%) scale(1.1);}}
-  @media (prefers-reduced-motion:reduce){.aurora{animation:none;}}
+    background-color:var(--cf-base);
+    background-image:
+      radial-gradient(120% 42% at 50% -10%, var(--glow-a), transparent 60%),
+      linear-gradient(27deg, var(--cf1) 5px, transparent 5px),
+      linear-gradient(207deg, var(--cf1) 5px, transparent 5px),
+      linear-gradient(27deg, var(--cf2) 5px, transparent 5px),
+      linear-gradient(207deg, var(--cf2) 5px, transparent 5px),
+      linear-gradient(90deg, var(--cf1) 10px, transparent 10px),
+      linear-gradient(var(--cf2) 25%, var(--cf-base) 25%, var(--cf-base) 50%, transparent 50%, transparent 75%, var(--cf1) 75%);
+    background-size:100% 100%, 20px 20px, 20px 20px, 20px 20px, 20px 20px, 20px 20px, 20px 20px;
+    background-position:0 0, 0 5px, 10px 0px, 0px 10px, 10px 5px, 0 0, 0 0;}
 
   .top{position:sticky;top:0;z-index:30;padding:16px 18px 12px;
     background:linear-gradient(var(--ground) 70%, transparent);
@@ -258,6 +263,15 @@
         </div>
       </div>
     </div>
+    <div class="card">
+      <div class="row between"><div class="h3">⚖️ Peso de hoy</div><div class="pill tnum" id="bwHoyPill">—</div></div>
+      <div class="field" style="margin-top:10px">
+        <input id="bwInputHoy" type="number" inputmode="decimal" placeholder="Tu peso de hoy (kg)"/>
+        <button class="btn teal sm" style="width:auto;padding:0 18px" id="bwSaveHoy">Guardar</button>
+      </div>
+      <div class="note" id="bwHoyNote" style="margin-top:8px"></div>
+    </div>
+
     <div class="row between" style="margin:18px 4px 8px"><div class="h3">Comidas de hoy</div><div class="pill teal" id="mealAdh">0%</div></div>
     <div class="card flush" id="hoyMeals"></div>
     <button class="btn ghost" id="notifBtn" style="margin-top:4px">🔔 Activar avisos de comidas y agua</button>
@@ -674,6 +688,7 @@
       $("#startWorkoutBtn").style.display="none";
     }
     renderWater();
+    renderBwHoy();
     var dk=dowKey(), meals=S.meals[dk]||[], log=S.mealLogs[todayKey()]||{};
     var wrap=$("#hoyMeals");wrap.innerHTML="";
     meals.forEach(function(m){
@@ -836,7 +851,27 @@
     var area=d+" L"+pts[pts.length-1][0].toFixed(1)+" "+h+" L"+pts[0][0].toFixed(1)+" "+h+" Z";
     svg.innerHTML='<path d="'+area+'" fill="var(--teal-soft)"/><path d="'+d+'" fill="none" stroke="var(--teal)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="'+pts[pts.length-1][0].toFixed(1)+'" cy="'+pts[pts.length-1][1].toFixed(1)+'" r="3.5" fill="var(--teal)"/>';
   }
-  $("#bwSave").onclick=function(){var v=parseFloat($("#bwInput").value);if(!v){toast("Ingresá un peso válido");return;}var t=todayKey();S.bw=S.bw.filter(function(x){return x.date!==t;});S.bw.push({date:t,kg:Math.round(v*10)/10});S.bw.sort(function(a,b){return a.date<b.date?-1:1;});save();$("#bwInput").value="";renderProg();toast("Peso guardado ✓");};
+  function saveBodyweight(v){
+    if(!v||v<=0){toast("Ingresá un peso válido");return false;}
+    var t=todayKey();S.bw=S.bw.filter(function(x){return x.date!==t;});
+    S.bw.push({date:t,kg:Math.round(v*10)/10});S.bw.sort(function(a,b){return a.date<b.date?-1:1;});
+    save();return true;
+  }
+  $("#bwSave").onclick=function(){if(saveBodyweight(parseFloat($("#bwInput").value))){$("#bwInput").value="";renderProg();renderBwHoy();toast("Peso guardado ✓");}};
+  $("#bwSaveHoy").onclick=function(){if(saveBodyweight(parseFloat($("#bwInputHoy").value))){$("#bwInputHoy").value="";renderBwHoy();toast("Peso guardado ✓");}};
+  function renderBwHoy(){
+    var t=todayKey(),today=null;S.bw.forEach(function(x){if(x.date===t)today=x;});
+    $("#bwHoyPill").textContent=today?(today.kg+" kg"):"—";
+    var note=$("#bwHoyNote");
+    if(today){
+      var prev=S.bw.filter(function(x){return x.date<t;}).slice(-1)[0];
+      if(prev){var d=Math.round((today.kg-prev.kg)*10)/10;note.innerHTML='Registrado hoy ✓ · <b style="color:'+(d>0?'var(--warn)':d<0?'var(--teal)':'var(--muted)')+'">'+(d>0?'+':'')+d+' kg</b> vs registro anterior';}
+      else note.textContent="Registrado hoy ✓ — tu primer registro. ¡A seguir así!";
+    }else{
+      var last=S.bw.slice(-1)[0];
+      note.textContent=last?("Último: "+last.kg+" kg ("+shortDate(last.date)+"). Cargá el de hoy 👆"):"Cargá tu peso para arrancar el seguimiento de progreso.";
+    }
+  }
 
   /* ===== PROGRESO POR EJERCICIO ===== */
   var exSelName=null;
