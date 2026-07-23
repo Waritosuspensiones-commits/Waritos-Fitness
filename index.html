@@ -225,6 +225,33 @@
   a.reset{background:none;border:none;color:var(--danger);font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;text-decoration:underline;}
   .toast{position:fixed;bottom:100px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--surface-3);border:1px solid var(--line);color:var(--text);padding:11px 18px;border-radius:12px;font-size:13px;font-weight:700;z-index:80;opacity:0;transition:.25s;box-shadow:var(--shadow);pointer-events:none;text-align:center;max-width:calc(100% - 40px);}
   .toast.on{opacity:1;transform:translateX(-50%) translateY(0);}
+  .authwrap{position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;padding:24px;
+    background-color:var(--cf-base);
+    background-image:
+      radial-gradient(120% 40% at 50% 0%, var(--glow-a), transparent 60%),
+      linear-gradient(27deg, var(--cf1) 5px, transparent 5px),
+      linear-gradient(207deg, var(--cf1) 5px, transparent 5px),
+      linear-gradient(27deg, var(--cf2) 5px, transparent 5px),
+      linear-gradient(207deg, var(--cf2) 5px, transparent 5px),
+      linear-gradient(90deg, var(--cf1) 10px, transparent 10px),
+      linear-gradient(var(--cf2) 25%, var(--cf-base) 25%, var(--cf-base) 50%, transparent 50%, transparent 75%, var(--cf1) 75%);
+    background-size:100% 100%,20px 20px,20px 20px,20px 20px,20px 20px,20px 20px,20px 20px;
+    background-position:0 0,0 5px,10px 0,0 10px,10px 5px,0 0,0 0;}
+  .authbox{width:100%;max-width:340px;background:var(--surface);border:1px solid var(--line-soft);border-radius:22px;padding:26px 22px;box-shadow:0 20px 50px -20px #000c;text-align:center;display:flex;flex-direction:column;align-items:center;}
+  .authlogo{width:210px;max-width:80%;height:auto;filter:drop-shadow(0 4px 8px rgba(0,0,0,.4));}
+  .authfit{font-family:'Permanent Marker',cursive;color:var(--ember);font-size:19px;margin:-4px 0 12px;transform:rotate(-3deg);}
+  .authtitle{font-family:var(--display);font-size:20px;font-weight:800;letter-spacing:-.3px;}
+  .authsub{font-size:12.5px;color:var(--muted);margin:3px 0 16px;line-height:1.4;}
+  .authinput{width:100%;background:var(--surface-2);border:1px solid var(--line);border-radius:12px;color:var(--text);padding:13px 14px;font-size:15px;font-family:inherit;font-weight:600;margin-bottom:10px;}
+  .authinput:focus{outline:2px solid var(--ember);outline-offset:-1px;border-color:transparent;}
+  .authbox .btn{margin-top:4px;}
+  .autherr{color:var(--danger);font-size:12.5px;font-weight:700;min-height:16px;margin-bottom:4px;}
+  .authtoggle{font-size:12.5px;color:var(--muted);margin-top:14px;}
+  .authtoggle a{color:var(--ember);font-weight:800;cursor:pointer;text-decoration:underline;}
+  .authnote{font-size:11px;color:var(--faint);margin-top:14px;line-height:1.4;}
+  .authusers{display:flex;flex-wrap:wrap;gap:7px;justify-content:center;margin-bottom:12px;}
+  .userchip{background:var(--surface-3);border:1px solid var(--line);color:var(--text);border-radius:999px;padding:7px 14px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer;}
+  .userchip:active{transform:scale(.96);}
   .selflat{width:100%;background:var(--surface-2);border:1px solid var(--line);border-radius:11px;color:var(--text);padding:11px 12px;font-size:14px;font-family:inherit;font-weight:700;-webkit-appearance:none;appearance:none;margin:4px 0 4px;background-image:linear-gradient(45deg,transparent 50%,var(--muted) 50%),linear-gradient(135deg,var(--muted) 50%,transparent 50%);background-position:calc(100% - 18px) 50%,calc(100% - 13px) 50%;background-size:5px 5px,5px 5px;background-repeat:no-repeat;}
   #printArea{display:none;}
   @media print{
@@ -349,7 +376,8 @@
       <div class="h3" style="margin-bottom:8px">Datos & biometría</div>
       <p class="note" style="margin-top:0">La sincronización automática de <b>frecuencia cardíaca, VFC, calorías activas y minutos de entrenamiento</b> desde el Apple Watch requiere HealthKit (versión nativa). Aquí registrás peso, reps y RPE, y el motor calcula tonelaje, adherencia y tendencias.</p>
       <div class="divider"></div>
-      <button class="reset" id="resetBtn">Borrar todos mis datos y reiniciar planes</button>
+      <div class="row between" style="margin-bottom:12px"><div class="note" style="margin:0">Sesión: <b id="curUser" style="color:var(--ember)">—</b></div><button class="btn ghost sm" style="width:auto;padding:8px 14px" id="logoutBtn">Cerrar sesión</button></div>
+      <button class="reset" id="resetBtn">Borrar mis datos y reiniciar planes</button>
     </div>
   </section>
 
@@ -401,6 +429,23 @@
     </div>
   </div>
 
+  <!-- PANTALLA DE LOGIN -->
+  <div id="authScreen" class="authwrap">
+    <div class="authbox">
+      <img src="logo.png" class="authlogo" alt="Warito's Fitness"/>
+      <div class="authfit">Fitness</div>
+      <div class="authtitle" id="authTitle">Iniciá sesión</div>
+      <div class="authsub" id="authSub">Ingresá con tu usuario para ver tu plan</div>
+      <div class="authusers" id="authUsers"></div>
+      <input id="authUser" class="authinput" type="text" placeholder="Usuario" autocapitalize="none" autocomplete="username"/>
+      <input id="authPass" class="authinput" type="password" placeholder="Contraseña" autocomplete="current-password"/>
+      <div class="autherr" id="authErr"></div>
+      <button class="btn primary" id="authSubmit">Entrar</button>
+      <div class="authtoggle"><span id="authToggleTxt">¿No tenés cuenta?</span> <a id="authToggle">Crear una</a></div>
+      <div class="authnote">🔒 Candado local: tus datos se guardan en este dispositivo.</div>
+    </div>
+  </div>
+
   <div id="printArea"></div>
   <div class="toast" id="toast"></div>
 </div>
@@ -408,7 +453,11 @@
 <script>
 (function(){
   "use strict";
-  var KEY="waritos-fitness-v3";
+  var LEGACY_KEY="waritos-fitness-v3";
+  var AUTHKEY="waritos-auth", DATA_PREFIX="wf-data::";
+  function getAuth(){try{return JSON.parse(localStorage.getItem(AUTHKEY))||{users:{},current:null};}catch(e){return {users:{},current:null};}}
+  function setAuth(a){try{localStorage.setItem(AUTHKEY,JSON.stringify(a));}catch(e){}}
+  function currentKey(){return DATA_PREFIX+(getAuth().current||"_guest");}
   var DOW=["dom","lun","mar","mie","jue","vie","sab"];
   var DOWALL=["lun","mar","mie","jue","vie","sab","dom"];
   var DOWLABEL={lun:"Lun",mar:"Mar",mie:"Mié",jue:"Jue",vie:"Vie",sab:"Sáb",dom:"Dom"};
@@ -655,7 +704,7 @@
   /* ===== STATE ===== */
   var S;
   function load(){
-    try{S=JSON.parse(localStorage.getItem(KEY));}catch(e){S=null;}
+    try{S=JSON.parse(localStorage.getItem(currentKey()));}catch(e){S=null;}
     if(!S||!S.meals||!S.workouts){
       var dp=defaultProfile();
       S={meals:seedMeals(),workouts:genRoutine(dp),profile:dp,mealLogs:{},sessions:[],bw:[],water:{},theme:null};
@@ -663,7 +712,7 @@
     S.mealLogs=S.mealLogs||{};S.sessions=S.sessions||[];S.bw=S.bw||[];S.water=S.water||{};S.profile=S.profile||defaultProfile();S.prefs=S.prefs||{diet:"omnivoro",avoid:""};
     save();
   }
-  function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}}
+  function save(){try{localStorage.setItem(currentKey(),JSON.stringify(S));}catch(e){}}
 
   /* ===== HELPERS ===== */
   function $(s,r){return (r||document).querySelector(s);}
@@ -1011,11 +1060,83 @@
   /* ===== THEME / RESET ===== */
   function applyTheme(){if(S.theme)document.documentElement.setAttribute("data-theme",S.theme);else document.documentElement.removeAttribute("data-theme");}
   $("#themeBtn").onclick=function(){var cur=document.documentElement.getAttribute("data-theme");var dark=cur?cur==="dark":window.matchMedia("(prefers-color-scheme: dark)").matches;S.theme=dark?"light":"dark";save();applyTheme();};
-  $("#resetBtn").onclick=function(){if(confirm("Esto borra tus registros y restaura los planes de fábrica. ¿Continuar?")){localStorage.removeItem(KEY);load();applyTheme();go("hoy");toast("Datos reiniciados");}};
+  $("#resetBtn").onclick=function(){if(confirm("Esto borra tus registros y restaura los planes de fábrica (solo de tu usuario). ¿Continuar?")){localStorage.removeItem(currentKey());load();applyTheme();go("hoy");toast("Datos reiniciados");}};
 
-  /* ===== INIT ===== */
-  load();applyTheme();renderHoy();
-  if("Notification" in window && Notification.permission==="granted"){scheduleNotifs();$("#notifBtn").textContent="🔔 Avisos activados";}
+  /* ===== AUTENTICACIÓN (local) ===== */
+  var authMode="login";
+  function randSalt(){var a=new Uint8Array(8);(window.crypto&&crypto.getRandomValues)?crypto.getRandomValues(a):a.forEach(function(_,i){a[i]=Math.floor(Math.random()*256);});return Array.prototype.map.call(a,function(b){return b.toString(16).padStart(2,"0");}).join("");}
+  function hashPass(pass,salt){
+    var data=salt+"::"+pass;
+    if(window.crypto&&crypto.subtle){
+      return crypto.subtle.digest("SHA-256",new TextEncoder().encode(data)).then(function(buf){
+        return Array.prototype.map.call(new Uint8Array(buf),function(b){return b.toString(16).padStart(2,"0");}).join("");
+      });
+    }
+    var h=5381;for(var i=0;i<data.length;i++)h=((h<<5)+h+data.charCodeAt(i))>>>0;
+    return Promise.resolve("x"+h.toString(16));
+  }
+  function renderAuthMode(){
+    var a=getAuth(), users=Object.keys(a.users);
+    if(authMode==="register"){
+      $("#authTitle").textContent="Creá tu cuenta";
+      $("#authSub").textContent="Elegí un usuario y contraseña para tu perfil";
+      $("#authSubmit").textContent="Crear cuenta";
+      $("#authToggleTxt").textContent="¿Ya tenés cuenta?";
+      $("#authToggle").textContent="Iniciar sesión";
+      $("#authPass").setAttribute("autocomplete","new-password");
+    }else{
+      $("#authTitle").textContent="Iniciá sesión";
+      $("#authSub").textContent="Ingresá con tu usuario para ver tu plan";
+      $("#authSubmit").textContent="Entrar";
+      $("#authToggleTxt").textContent="¿No tenés cuenta?";
+      $("#authToggle").textContent="Crear una";
+      $("#authPass").setAttribute("autocomplete","current-password");
+    }
+    var uw=$("#authUsers");uw.innerHTML="";
+    if(authMode==="login"&&users.length){
+      users.forEach(function(u){var c=el("button","userchip","👤 "+u);c.onclick=function(){$("#authUser").value=u;$("#authPass").value="";$("#authPass").focus();};uw.appendChild(c);});
+    }
+    $("#authErr").textContent="";
+  }
+  function showAuth(){authMode=Object.keys(getAuth().users).length?"login":"register";renderAuthMode();$("#authScreen").style.display="flex";}
+  function enterApp(){$("#authScreen").style.display="none";$("#authUser").value="";$("#authPass").value="";bootApp();}
+  function logout(){var a=getAuth();a.current=null;setAuth(a);showAuth();}
+  $("#authToggle").onclick=function(){authMode=authMode==="login"?"register":"login";renderAuthMode();};
+  $("#logoutBtn").onclick=logout;
+  function doAuth(){
+    var u=$("#authUser").value.trim().toLowerCase(), p=$("#authPass").value, a=getAuth();
+    if(!u||!p){$("#authErr").textContent="Completá usuario y contraseña";return;}
+    if(authMode==="register"){
+      if(u.length<3){$("#authErr").textContent="El usuario debe tener 3+ caracteres";return;}
+      if(p.length<4){$("#authErr").textContent="La contraseña debe tener 4+ caracteres";return;}
+      if(a.users[u]){$("#authErr").textContent="Ese usuario ya existe";return;}
+      var salt=randSalt();
+      hashPass(p,salt).then(function(hash){
+        a.users[u]={salt:salt,hash:hash};
+        if(Object.keys(a.users).length===1 && localStorage.getItem(LEGACY_KEY) && !localStorage.getItem(DATA_PREFIX+u)){
+          localStorage.setItem(DATA_PREFIX+u, localStorage.getItem(LEGACY_KEY)); // migrar datos previos al 1er usuario
+        }
+        a.current=u; setAuth(a); enterApp(); toast("¡Bienvenido, "+u+"! 💪");
+      });
+    }else{
+      if(!a.users[u]){$("#authErr").textContent="Usuario no encontrado";return;}
+      hashPass(p,a.users[u].salt).then(function(hash){
+        if(hash!==a.users[u].hash){$("#authErr").textContent="Contraseña incorrecta";return;}
+        a.current=u; setAuth(a); enterApp();
+      });
+    }
+  }
+  $("#authSubmit").onclick=doAuth;
+  $("#authPass").addEventListener("keydown",function(e){if(e.key==="Enter")doAuth();});
+  function updateUserBadge(){$("#curUser").textContent=getAuth().current||"—";}
+
+  /* ===== ARRANQUE ===== */
+  function bootApp(){
+    load();applyTheme();updateUserBadge();go("hoy");
+    if("Notification" in window && Notification.permission==="granted"){scheduleNotifs();$("#notifBtn").textContent="🔔 Avisos activados";}
+  }
+  var _a0=getAuth();
+  if(_a0.current && _a0.users[_a0.current]) enterApp(); else showAuth();
 })();
 </script></body>
 </html>
