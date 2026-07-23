@@ -359,6 +359,7 @@
   <section class="screen" id="scr-prog">
     <div class="eyebrow">Auditoría</div>
     <h2 class="h2">Progreso</h2>
+    <button class="btn primary" id="adminBtn" style="display:none;margin-bottom:12px">👑 Ver progreso de todos</button>
     <div class="stat-grid" style="margin-bottom:12px">
       <div class="stat"><div class="k">Tonelaje del mes</div><div class="v tnum" id="stTon">0<small> kg</small></div></div>
       <div class="stat"><div class="k">Sesiones</div><div class="v tnum" id="stSess">0</div></div>
@@ -452,6 +453,15 @@
       <button class="btn primary" id="authSubmit">Entrar</button>
       <div class="authtoggle"><span id="authToggleTxt">¿No tenés cuenta?</span> <a id="authToggle">Crear una</a></div>
       <div class="authnote">🔒 Candado local: tus datos se guardan en este dispositivo.</div>
+    </div>
+  </div>
+
+  <!-- MODAL PANEL DEL DUEÑO -->
+  <div class="modal" id="adminModal">
+    <div class="sheet">
+      <div class="sheet-h"><div class="h3">👑 Progreso de todos</div><button class="icon-btn" id="adminClose">✕</button></div>
+      <p class="note" style="margin-top:2px">Lo que cada usuario tiene sincronizado: rutina, comidas, peso y sesiones.</p>
+      <div id="adminList"></div>
     </div>
   </div>
 
@@ -721,7 +731,7 @@
     S.mealLogs=S.mealLogs||{};S.sessions=S.sessions||[];S.bw=S.bw||[];S.water=S.water||{};S.profile=S.profile||defaultProfile();S.prefs=S.prefs||{diet:"omnivoro",avoid:""};
     save();
   }
-  function save(){try{localStorage.setItem(currentKey(),JSON.stringify(S));}catch(e){}}
+  function save(){try{localStorage.setItem(currentKey(),JSON.stringify(S));}catch(e){} scheduleCloudSave();}
 
   /* ===== HELPERS ===== */
   function $(s,r){return (r||document).querySelector(s);}
@@ -1017,6 +1027,41 @@
   }
   $("#exportPdf").onclick=function(){renderExport();setTimeout(function(){window.print();},60);};
 
+  /* ===== PANEL DEL DUEÑO ===== */
+  function admFmt(iso){if(!iso)return "—";try{var d=new Date(iso);return d.toLocaleDateString("es-ES",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"});}catch(e){return "—";}}
+  function adminCard(item){
+    var head='<div class="row between"><div class="h3">👤 '+item.username+'</div><div class="pill tnum">últ: '+admFmt(item.last_seen)+'</div></div>';
+    var d=item.data;
+    if(!d)return '<div class="card">'+head+'<div class="note" style="margin-top:6px">Todavía no sincronizó datos.</div></div>';
+    var p=d.profile||{};
+    var bw=(d.bw&&d.bw.length)?d.bw[d.bw.length-1].kg+" kg":"—";
+    var sess=d.sessions||[], last=sess.length?sess[sess.length-1]:null, lastTxt="Sin sesiones aún";
+    if(last){var t=0,ns=0;(last.sets||[]).forEach(function(s){if(s.done){t+=(parseFloat(s.weight)||0)*(parseFloat(s.reps)||0);ns++;}});lastTxt=(last.focus||"")+" · "+ns+" series · "+Math.round(t).toLocaleString("es-ES")+" kg ("+(last.date||"")+")";}
+    var pills='<div class="prof" style="margin-top:8px">'+
+      '<span class="pill">'+(p.days||"?")+' días</span>'+
+      (p.goal?'<span class="pill ember">'+({hipertrofia:"Hipertrofia",fuerza:"Fuerza",grasa:"Def. grasa"}[p.goal]||p.goal)+'</span>':'')+
+      (p.loc?'<span class="pill">'+({gym:"Gimnasio",mancuernas:"Casa+manc.",peso:"Sin equipo"}[p.loc]||"")+'</span>':'')+
+      '<span class="pill teal tnum">'+bw+'</span>'+
+      (p.kcal?'<span class="pill tnum">~'+p.kcal+' kcal</span>':'')+
+      '<span class="pill tnum">'+sess.length+' sesiones</span></div>';
+    var routine='<div class="note" style="margin-top:8px"><b>Última rutina:</b> '+lastTxt+'</div>';
+    var mealTxt="";
+    try{var dowk=["dom","lun","mar","mie","jue","vie","sab"][new Date().getDay()];var ml=(d.meals&&d.meals[dowk])||[];if(ml.length)mealTxt='<div class="note" style="margin-top:4px"><b>Come hoy:</b> '+ml.map(function(m){return m.time+" "+m.name;}).join(" · ")+'</div>';}catch(e){}
+    return '<div class="card">'+head+pills+routine+mealTxt+'</div>';
+  }
+  function renderAdmin(list){var w=$("#adminList");if(!list||!list.length){w.innerHTML='<div class="empty">Nadie sincronizó datos todavía.</div>';return;}w.innerHTML=list.map(adminCard).join("");}
+  $("#adminClose").onclick=function(){$("#adminModal").classList.remove("on");};
+  $("#adminModal").onclick=function(e){if(e.target===this)this.classList.remove("on");};
+  $("#adminBtn").onclick=function(){
+    $("#adminModal").classList.add("on");$("#adminList").innerHTML='<div class="empty">Cargando…</div>';
+    var a=getAuth(),c=initSupabase();
+    if(!c){$("#adminList").innerHTML='<div class="empty">Sin conexión con el servidor.</div>';return;}
+    c.rpc("admin_all",{p_user:a.current,p_token:a.token}).then(function(res){
+      if(res.error||!res.data){$("#adminList").innerHTML='<div class="empty">No se pudo cargar (¿sos el dueño?).</div>';return;}
+      renderAdmin(res.data);
+    }).catch(function(){$("#adminList").innerHTML='<div class="empty">Error de conexión.</div>';});
+  };
+
   /* ===== GENERADOR (modal) ===== */
   function readSeg(id){var b=$("#"+id+" .on");return b?b.dataset.v:null;}
   function setSeg(id,val){document.querySelectorAll("#"+id+" button").forEach(function(b){b.classList.toggle("on",b.dataset.v===String(val));});}
@@ -1114,16 +1159,18 @@
     if(!c){$("#authErr").textContent="Sin conexión con el servidor. Revisá tu internet.";return;}
     $("#authErr").textContent="Conectando…";$("#authSubmit").disabled=true;
     var fin=function(){$("#authSubmit").disabled=false;};
-    var onLogged=function(){
-      if(localStorage.getItem(LEGACY_KEY) && !localStorage.getItem(DATA_PREFIX+u)){localStorage.setItem(DATA_PREFIX+u,localStorage.getItem(LEGACY_KEY));}
-      setAuth({current:u});enterApp();
-    };
+    var isReg=(authMode==="register");
     var handle=function(res){
       fin();
       if(res.error){$("#authErr").textContent="Error del servidor. Probá de nuevo.";return;}
       var r=res.data||"";
-      if(r==="OK"){onLogged();if(authMode==="register")toast("¡Bienvenido, "+u+"! 💪");}
-      else{$("#authErr").textContent=r.replace(/^ERR:/,"");}
+      if(r==="OK" || r.indexOf("OK:")===0){
+        var token=(r.indexOf("OK:")===0)?r.slice(3):null;
+        if(localStorage.getItem(LEGACY_KEY) && !localStorage.getItem(DATA_PREFIX+u)){localStorage.setItem(DATA_PREFIX+u,localStorage.getItem(LEGACY_KEY));}
+        setAuth({current:u,token:token});
+        var go2=function(){enterApp();if(isReg)toast("¡Bienvenido, "+u+"! 💪");};
+        if(token)cloudPull(u,token,go2);else go2();
+      }else{$("#authErr").textContent=r.replace(/^ERR:/,"");}
     };
     var fail=function(){fin();$("#authErr").textContent="No se pudo conectar. Revisá tu internet.";};
     if(authMode==="register"){
@@ -1147,6 +1194,36 @@
     if(!window.supabase||!window.supabase.createClient)return null;
     try{sb=window.supabase.createClient(SUPA_URL,SUPA_KEY);}catch(e){sb=null;}
     return sb;
+  }
+
+  /* ===== SINCRONIZACIÓN EN LA NUBE ===== */
+  var cloudTimer=null;
+  function cloudPushObj(u,token,obj){
+    var c=initSupabase(); if(!c||!token||!obj)return;
+    try{c.rpc("save_data",{p_user:u,p_token:token,p_data:obj}).then(function(){}).catch(function(){});}catch(e){}
+  }
+  function cloudPull(u,token,cb){
+    var c=initSupabase(); if(!c){if(cb)cb();return;}
+    c.rpc("load_data",{p_user:u,p_token:token}).then(function(res){
+      if(!res.error){
+        if(res.data){try{localStorage.setItem(DATA_PREFIX+u,JSON.stringify(res.data));}catch(e){}}
+        else{var loc=localStorage.getItem(DATA_PREFIX+u);if(loc){try{cloudPushObj(u,token,JSON.parse(loc));}catch(e){}}}
+      }
+      if(cb)cb();
+    }).catch(function(){if(cb)cb();});
+  }
+  function scheduleCloudSave(){
+    var a=getAuth(); if(!a||!a.token||!S)return;
+    clearTimeout(cloudTimer);
+    cloudTimer=setTimeout(function(){cloudPushObj(a.current,a.token,S);},1500);
+  }
+  function checkAdmin(){
+    var a=getAuth(),btn=$("#adminBtn"); if(!btn)return;
+    if(!a.token){btn.style.display="none";return;}
+    var c=initSupabase(); if(!c){btn.style.display="none";return;}
+    c.rpc("admin_all",{p_user:a.current,p_token:a.token}).then(function(res){
+      btn.style.display=(!res.error&&res.data)?"":"none";
+    }).catch(function(){btn.style.display="none";});
   }
   function renderPresence(users){
     var cEl=$("#presCount"), lEl=$("#presList"); if(!cEl)return;
@@ -1177,8 +1254,10 @@
     load();applyTheme();updateUserBadge();go("hoy");
     if("Notification" in window && Notification.permission==="granted"){scheduleNotifs();$("#notifBtn").textContent="🔔 Avisos activados";}
     joinPresence(getAuth().current);
+    checkAdmin();
   }
-  if(getAuth().current) enterApp(); else showAuth();
+  var _s=getAuth();
+  if(_s.current){ if(_s.token){cloudPull(_s.current,_s.token,enterApp);} else enterApp(); } else showAuth();
 })();
 </script></body>
 </html>
