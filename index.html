@@ -403,6 +403,9 @@
       <div class="h3" style="margin-bottom:8px">Datos & biometría</div>
       <p class="note" style="margin-top:0">La sincronización automática de <b>frecuencia cardíaca, VFC, calorías activas y minutos de entrenamiento</b> desde el Apple Watch requiere HealthKit (versión nativa). Aquí registrás peso, reps y RPE, y el motor calcula tonelaje, adherencia y tendencias.</p>
       <div class="divider"></div>
+      <div class="h3" style="margin-bottom:6px">Tu apodo (nombre visible)</div>
+      <div class="field" style="margin-bottom:6px"><input id="apodoInput" type="text" placeholder="Ej: Warito, Toro, Fran…"/><button class="btn teal sm" style="width:auto;padding:0 16px" id="apodoSave">Guardar</button></div>
+      <p class="note" style="margin-top:0;margin-bottom:12px">Es solo el nombre que se muestra en la app. Tu usuario para entrar no cambia.</p>
       <div class="row between" style="margin-bottom:12px"><div class="note" style="margin:0">Sesión: <b id="curUser" style="color:var(--ember)">—</b></div><button class="btn ghost sm" style="width:auto;padding:8px 14px" id="logoutBtn">Cerrar sesión</button></div>
       <button class="reset" id="resetBtn">Borrar mis datos y reiniciar planes</button>
     </div>
@@ -754,7 +757,7 @@
       var dp=defaultProfile();
       S={meals:seedMeals(),workouts:genRoutine(dp),profile:dp,mealLogs:{},sessions:[],bw:[],water:{},theme:null};
     }
-    S.mealLogs=S.mealLogs||{};S.sessions=S.sessions||[];S.bw=S.bw||[];S.water=S.water||{};S.profile=S.profile||defaultProfile();S.prefs=S.prefs||{diet:"omnivoro",avoid:""};S.daily=S.daily||{};
+    S.mealLogs=S.mealLogs||{};S.sessions=S.sessions||[];S.bw=S.bw||[];S.water=S.water||{};S.profile=S.profile||defaultProfile();S.prefs=S.prefs||{diet:"omnivoro",avoid:""};S.daily=S.daily||{};S.apodo=S.apodo||"";
     save();
   }
   function save(){try{localStorage.setItem(currentKey(),JSON.stringify(S));}catch(e){} scheduleCloudSave();}
@@ -769,7 +772,8 @@
   function trainingDow(){var k=dowKey();return isTraining(k)?k:null;}
   var esDate=new Intl.DateTimeFormat("es-ES",{weekday:"long",day:"numeric",month:"long"});
   function toast(msg){var t=$("#toast");t.textContent=msg;t.classList.add("on");clearTimeout(t._t);t._t=setTimeout(function(){t.classList.remove("on");},2400);}
-  function capitalize(s){return s.charAt(0).toUpperCase()+s.slice(1);}
+  function capitalize(s){s=s||"";return s.charAt(0).toUpperCase()+s.slice(1);}
+  function displayName(){return (S&&S.apodo&&S.apodo.trim())?S.apodo.trim():(getAuth().current||"");}
   function fullDay(k){return {lun:"Lunes",mar:"Martes",mie:"Miércoles",jue:"Jueves",vie:"Viernes",sab:"Sábado",dom:"Domingo"}[k];}
   function mealTotals(list){var t={kcal:0,p:0,c:0,f:0};list.forEach(function(m){t.kcal+=m.kcal;t.p+=m.p;t.c+=m.c;t.f+=m.f;});return t;}
 
@@ -777,7 +781,7 @@
   function renderHoy(){
     var now=new Date();
     $("#todayLabel").textContent=capitalize(now.toLocaleDateString("es-ES",{weekday:"long"}))+" · "+esDate.format(now).replace(/^[^,]*,\s*/,"");
-    $("#hoyTitle").textContent="¡Hola, "+capitalize(getAuth().current||"")+"! 💪";
+    $("#hoyTitle").textContent="¡Hola, "+capitalize(displayName())+"! 💪";
     var tk=trainingDow(), ring=$("#wkRing"); ring.classList.remove("teal");
     if(tk){
       var w=S.workouts[tk], sess=sessionFor(todayKey()), totalSets=0,doneSets=0;
@@ -970,6 +974,7 @@
     drawSpark(bw.map(function(x){return x.kg;}));
     renderExProgress();
     renderWeekly();
+    if($("#apodoInput")&&document.activeElement!==$("#apodoInput"))$("#apodoInput").value=S.apodo||"";
     var list=$("#sessList");list.innerHTML="";
     var recent=S.sessions.slice().reverse().slice(0,12);
     if(!recent.length)list.appendChild(el("div","empty","Todavía no registraste sesiones. Empezá tu primer entreno en la pestaña Entreno."));
@@ -1025,6 +1030,7 @@
     save();return true;
   }
   $("#bwSave").onclick=function(){if(saveBodyweight(parseFloat($("#bwInput").value))){$("#bwInput").value="";renderProg();renderBwHoy();toast("Peso guardado ✓");}};
+  $("#apodoSave").onclick=function(){S.apodo=$("#apodoInput").value.trim();save();renderHoy();toast(S.apodo?("Ahora te ves como: "+S.apodo+" ✓"):"Apodo quitado");};
   $("#bwSaveHoy").onclick=function(){if(saveBodyweight(parseFloat($("#bwInputHoy").value))){$("#bwInputHoy").value="";renderBwHoy();toast("Peso guardado ✓");}};
   function renderBwHoy(){
     var t=todayKey(),today=null;S.bw.forEach(function(x){if(x.date===t)today=x;});
@@ -1115,7 +1121,9 @@
   /* ===== PANEL DEL DUEÑO ===== */
   function admFmt(iso){if(!iso)return "—";try{var d=new Date(iso);return d.toLocaleDateString("es-ES",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"});}catch(e){return "—";}}
   function adminCard(item){
-    var head='<div class="row between"><div class="h3">👤 '+item.username+'</div><div class="pill tnum">últ: '+admFmt(item.last_seen)+'</div></div>';
+    var apo=(item.data&&item.data.apodo&&item.data.apodo.trim())?item.data.apodo.trim():"";
+    var nm=apo?(apo+' <span style="color:var(--faint);font-weight:600">('+item.username+')</span>'):item.username;
+    var head='<div class="row between"><div class="h3">👤 '+nm+'</div><div class="pill tnum">últ: '+admFmt(item.last_seen)+'</div></div>';
     var reg='<div class="note" style="margin-top:3px">Registrado: '+admFmt(item.created_at)+'</div>';
     var rst='<button class="btn ghost rstpw" data-user="'+item.username+'">🔑 Resetear contraseña</button>';
     var d=item.data;
