@@ -240,6 +240,10 @@
   .userchip:active{transform:scale(.96);}
   .livedot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--teal);margin-right:7px;vertical-align:middle;box-shadow:0 0 0 0 rgba(47,212,167,.5);animation:pulse 2s infinite;}
   @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(47,212,167,.5)}70%{box-shadow:0 0 0 9px rgba(47,212,167,0)}100%{box-shadow:0 0 0 0 rgba(47,212,167,0)}}
+  .codewrap{display:flex;flex-wrap:wrap;gap:7px;margin-top:4px;}
+  .codechip{font-family:inherit;background:var(--teal-soft);color:var(--teal);border:1px solid var(--teal);border-radius:9px;padding:8px 12px;font-weight:800;font-size:14px;letter-spacing:1px;cursor:pointer;font-variant-numeric:tabular-nums;}
+  .codechip:active{transform:scale(.96);}
+  .rstpw{width:auto;padding:6px 11px;font-size:12px;margin-top:10px;}
   .selflat{width:100%;background:var(--surface-2);border:1px solid var(--line);border-radius:11px;color:var(--text);padding:11px 12px;font-size:14px;font-family:inherit;font-weight:700;-webkit-appearance:none;appearance:none;margin:4px 0 4px;background-image:linear-gradient(45deg,transparent 50%,var(--muted) 50%),linear-gradient(135deg,var(--muted) 50%,transparent 50%);background-position:calc(100% - 18px) 50%,calc(100% - 13px) 50%;background-size:5px 5px,5px 5px;background-repeat:no-repeat;}
   #printArea{display:none;}
   @media print{
@@ -444,9 +448,17 @@
   <!-- MODAL PANEL DEL DUEÑO -->
   <div class="modal" id="adminModal">
     <div class="sheet">
-      <div class="sheet-h"><div class="h3">👑 Progreso de todos</div><button class="icon-btn" id="adminClose">✕</button></div>
-      <p class="note" style="margin-top:2px">Lo que cada usuario tiene sincronizado: rutina, comidas, peso y sesiones.</p>
-      <div id="adminList"></div>
+      <div class="sheet-h"><div class="h3">👑 Panel del dueño</div><button class="icon-btn" id="adminClose">✕</button></div>
+
+      <div class="h3" style="margin-top:12px">Códigos de invitación</div>
+      <p class="note" style="margin-top:2px">Generá uno por amigo. Cada código sirve una sola vez. Tocá un código para copiarlo.</p>
+      <button class="btn primary sm" id="genCodeBtn" style="margin:8px 0 10px">➕ Generar código nuevo</button>
+      <div id="adminCodes"></div>
+
+      <div class="divider"></div>
+      <div class="h3">Usuarios</div>
+      <p class="note" style="margin-top:2px">Rutina, comidas, peso y sesiones de cada uno. Las contraseñas están encriptadas (no se pueden ver); si alguien la olvida, reseteala.</p>
+      <div id="adminList" style="margin-top:8px"></div>
     </div>
   </div>
 
@@ -1017,8 +1029,10 @@
   function admFmt(iso){if(!iso)return "—";try{var d=new Date(iso);return d.toLocaleDateString("es-ES",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"});}catch(e){return "—";}}
   function adminCard(item){
     var head='<div class="row between"><div class="h3">👤 '+item.username+'</div><div class="pill tnum">últ: '+admFmt(item.last_seen)+'</div></div>';
+    var reg='<div class="note" style="margin-top:3px">Registrado: '+admFmt(item.created_at)+'</div>';
+    var rst='<button class="btn ghost rstpw" data-user="'+item.username+'">🔑 Resetear contraseña</button>';
     var d=item.data;
-    if(!d)return '<div class="card">'+head+'<div class="note" style="margin-top:6px">Todavía no sincronizó datos.</div></div>';
+    if(!d)return '<div class="card">'+head+reg+'<div class="note" style="margin-top:6px">Todavía no sincronizó datos.</div>'+rst+'</div>';
     var p=d.profile||{};
     var bw=(d.bw&&d.bw.length)?d.bw[d.bw.length-1].kg+" kg":"—";
     var sess=d.sessions||[], last=sess.length?sess[sess.length-1]:null, lastTxt="Sin sesiones aún";
@@ -1033,19 +1047,60 @@
     var routine='<div class="note" style="margin-top:8px"><b>Última rutina:</b> '+lastTxt+'</div>';
     var mealTxt="";
     try{var dowk=["dom","lun","mar","mie","jue","vie","sab"][new Date().getDay()];var ml=(d.meals&&d.meals[dowk])||[];if(ml.length)mealTxt='<div class="note" style="margin-top:4px"><b>Come hoy:</b> '+ml.map(function(m){return m.time+" "+m.name;}).join(" · ")+'</div>';}catch(e){}
-    return '<div class="card">'+head+pills+routine+mealTxt+'</div>';
+    return '<div class="card">'+head+reg+pills+routine+mealTxt+rst+'</div>';
   }
-  function renderAdmin(list){var w=$("#adminList");if(!list||!list.length){w.innerHTML='<div class="empty">Nadie sincronizó datos todavía.</div>';return;}w.innerHTML=list.map(adminCard).join("");}
+  function renderAdmin(list){
+    var w=$("#adminList");
+    if(!list||!list.length){w.innerHTML='<div class="empty">Nadie sincronizó datos todavía.</div>';return;}
+    w.innerHTML=list.map(adminCard).join("");
+    w.querySelectorAll(".rstpw").forEach(function(b){b.onclick=function(){resetPass(b.dataset.user);};});
+  }
+  function copyText(t){try{if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(t);}catch(e){}}
+  function renderCodes(list){
+    var w=$("#adminCodes");
+    if(list===null){w.innerHTML='<div class="note">Falta correr el SQL nuevo en Supabase para activar los códigos desde la app.</div>';return;}
+    var avail=list.filter(function(c){return c.active&&!c.used_by;}), used=list.filter(function(c){return c.used_by;});
+    var h="";
+    if(avail.length){h+='<div class="note" style="margin:0 0 2px"><b>Libres ('+avail.length+')</b> — tocá para copiar:</div><div class="codewrap">'+avail.map(function(c){return '<button class="codechip" data-code="'+c.code+'">'+c.code+'</button>';}).join("")+'</div>';}
+    else{h+='<div class="note">No hay códigos libres. Generá uno 👆</div>';}
+    if(used.length){h+='<div class="note" style="margin:12px 0 2px"><b>Ya usados ('+used.length+')</b>:</div>'+used.map(function(c){return '<div class="note" style="margin:1px 0">• <span class="tnum">'+c.code+'</span> → '+(c.used_by||"?")+'</div>';}).join("");}
+    w.innerHTML=h;
+    w.querySelectorAll(".codechip").forEach(function(b){b.onclick=function(){copyText(b.dataset.code);toast("Código "+b.dataset.code+" copiado ✓");};});
+  }
+  function loadAdminCodes(){
+    var a=getAuth(),c=initSupabase(); if(!c){renderCodes(null);return;}
+    c.rpc("admin_codes",{p_user:a.current,p_token:a.token}).then(function(res){renderCodes(res.error?null:res.data);}).catch(function(){renderCodes(null);});
+  }
+  function resetPass(user){
+    var np=window.prompt("Nueva contraseña para "+user+" (mínimo 4 caracteres):");
+    if(!np)return;
+    var a=getAuth(),c=initSupabase(); if(!c){toast("Sin conexión");return;}
+    c.rpc("admin_reset_password",{p_user:a.current,p_token:a.token,p_target:user,p_newpass:np}).then(function(res){
+      toast(res.data==="OK"?("Contraseña de "+user+" cambiada ✓"):(""+(res.data||"Error")).replace(/^ERR:/,""));
+    }).catch(function(){toast("Error de conexión");});
+  }
+  $("#genCodeBtn").onclick=function(){
+    var a=getAuth(),c=initSupabase(); if(!c){toast("Sin conexión");return;}
+    $("#genCodeBtn").disabled=true;
+    c.rpc("admin_create_code",{p_user:a.current,p_token:a.token}).then(function(res){
+      $("#genCodeBtn").disabled=false;
+      var d=res.data||"";
+      if(res.error||(""+d).indexOf("ERR")===0||!d){toast("No se pudo generar (¿corriste el SQL nuevo?)");return;}
+      copyText(d);toast("Código "+d+" generado y copiado ✓");loadAdminCodes();
+    }).catch(function(){$("#genCodeBtn").disabled=false;toast("Error de conexión");});
+  };
   $("#adminClose").onclick=function(){$("#adminModal").classList.remove("on");};
   $("#adminModal").onclick=function(e){if(e.target===this)this.classList.remove("on");};
   $("#adminBtn").onclick=function(){
-    $("#adminModal").classList.add("on");$("#adminList").innerHTML='<div class="empty">Cargando…</div>';
+    $("#adminModal").classList.add("on");
+    $("#adminList").innerHTML='<div class="empty">Cargando…</div>';$("#adminCodes").innerHTML='<div class="note">Cargando…</div>';
     var a=getAuth(),c=initSupabase();
     if(!c){$("#adminList").innerHTML='<div class="empty">Sin conexión con el servidor.</div>';return;}
     c.rpc("admin_all",{p_user:a.current,p_token:a.token}).then(function(res){
       if(res.error||!res.data){$("#adminList").innerHTML='<div class="empty">No se pudo cargar (¿sos el dueño?).</div>';return;}
       renderAdmin(res.data);
     }).catch(function(){$("#adminList").innerHTML='<div class="empty">Error de conexión.</div>';});
+    loadAdminCodes();
   };
 
   /* ===== GENERADOR (modal) ===== */
