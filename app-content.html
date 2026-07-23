@@ -238,6 +238,8 @@
   .authusers{display:flex;flex-wrap:wrap;gap:7px;justify-content:center;margin-bottom:12px;}
   .userchip{background:var(--surface-3);border:1px solid var(--line);color:var(--text);border-radius:999px;padding:7px 14px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer;}
   .userchip:active{transform:scale(.96);}
+  .livedot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--teal);margin-right:7px;vertical-align:middle;box-shadow:0 0 0 0 rgba(47,212,167,.5);animation:pulse 2s infinite;}
+  @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(47,212,167,.5)}70%{box-shadow:0 0 0 9px rgba(47,212,167,0)}100%{box-shadow:0 0 0 0 rgba(47,212,167,0)}}
   .selflat{width:100%;background:var(--surface-2);border:1px solid var(--line);border-radius:11px;color:var(--text);padding:11px 12px;font-size:14px;font-family:inherit;font-weight:700;-webkit-appearance:none;appearance:none;margin:4px 0 4px;background-image:linear-gradient(45deg,transparent 50%,var(--muted) 50%),linear-gradient(135deg,var(--muted) 50%,transparent 50%);background-position:calc(100% - 18px) 50%,calc(100% - 13px) 50%;background-size:5px 5px,5px 5px;background-repeat:no-repeat;}
   #printArea{display:none;}
   @media print{
@@ -303,6 +305,11 @@
     <div class="card flush" id="hoyMeals"></div>
     <button class="btn ghost" id="notifBtn" style="margin-top:4px">🔔 Activar avisos de comidas y agua</button>
     <p class="note">Los avisos con el menú exacto y los recordatorios de agua se disparan mientras la app esté abierta o en segundo plano reciente. Para alertas 100% con la app cerrada hace falta la versión nativa en iPhone.</p>
+
+    <div class="card" style="margin-top:12px">
+      <div class="row between"><div class="h3"><span class="livedot"></span>Conectados ahora</div><div class="pill teal tnum" id="presCount">—</div></div>
+      <div class="note" id="presList" style="margin-top:6px">Conectando con la comunidad Warito…</div>
+    </div>
   </section>
 
   <!-- NUTRICION -->
@@ -1086,7 +1093,7 @@
   }
   function showAuth(){authMode=Object.keys(getAuth().users).length?"login":"register";renderAuthMode();$("#authScreen").style.display="flex";}
   function enterApp(){$("#authScreen").style.display="none";$("#authUser").value="";$("#authPass").value="";bootApp();}
-  function logout(){var a=getAuth();a.current=null;setAuth(a);showAuth();}
+  function logout(){leavePresence();var a=getAuth();a.current=null;setAuth(a);showAuth();}
   $("#authToggle").onclick=function(){authMode=authMode==="login"?"register":"login";renderAuthMode();};
   $("#logoutBtn").onclick=logout;
   function doAuth(){
@@ -1116,10 +1123,45 @@
   $("#authPass").addEventListener("keydown",function(e){if(e.key==="Enter")doAuth();});
   function updateUserBadge(){$("#curUser").textContent=getAuth().current||"—";}
 
+  /* ===== SUPABASE: CONECTADOS AHORA (presencia en tiempo real) ===== */
+  var SUPA_URL="https://nlhbmqojbcmicnnsbnza.supabase.co";
+  var SUPA_KEY="sb_publishable_oZlk00-7h6GAhtr2Mbb_WA_r3wKacwu";
+  var sb=null, presenceCh=null;
+  function initSupabase(){
+    if(sb)return sb;
+    if(!window.supabase||!window.supabase.createClient)return null;
+    try{sb=window.supabase.createClient(SUPA_URL,SUPA_KEY);}catch(e){sb=null;}
+    return sb;
+  }
+  function renderPresence(users){
+    var cEl=$("#presCount"), lEl=$("#presList"); if(!cEl)return;
+    if(users===null){cEl.textContent="—";lEl.textContent="Sin conexión con el servidor (revisá tu internet)";return;}
+    cEl.textContent=users.length;
+    var cur=(getAuth().current||"").toLowerCase();
+    var others=users.filter(function(u){return u.toLowerCase()!==cur;});
+    lEl.textContent = users.length<=1 ? "Sos el único conectado ahora 👋"
+                      : ("Conectados: "+users.join(" · "));
+  }
+  function joinPresence(username){
+    var c=initSupabase(); if(!c){renderPresence(null);return;}
+    leavePresence();
+    try{
+      presenceCh=c.channel("waritos-presence",{config:{presence:{key:(username||"invitado")}}});
+      presenceCh.on("presence",{event:"sync"},function(){renderPresence(Object.keys(presenceCh.presenceState()));});
+      presenceCh.subscribe(function(status){
+        if(status==="SUBSCRIBED"){presenceCh.track({at:Date.now()});}
+        else if(status==="CHANNEL_ERROR"||status==="TIMED_OUT"){renderPresence(null);}
+      });
+    }catch(e){renderPresence(null);}
+  }
+  function leavePresence(){if(presenceCh){try{initSupabase().removeChannel(presenceCh);}catch(e){}presenceCh=null;}}
+  window.addEventListener("beforeunload",leavePresence);
+
   /* ===== ARRANQUE ===== */
   function bootApp(){
     load();applyTheme();updateUserBadge();go("hoy");
     if("Notification" in window && Notification.permission==="granted"){scheduleNotifs();$("#notifBtn").textContent="🔔 Avisos activados";}
+    joinPresence(getAuth().current);
   }
   var _a0=getAuth();
   if(_a0.current && _a0.users[_a0.current]) enterApp(); else showAuth();
