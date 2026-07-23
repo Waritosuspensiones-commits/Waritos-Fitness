@@ -437,7 +437,7 @@
       <div class="autherr" id="authErr"></div>
       <button class="btn primary" id="authSubmit">Entrar</button>
       <div class="authtoggle"><span id="authToggleTxt">¿No tenés cuenta?</span> <a id="authToggle">Crear una</a></div>
-      <div class="authnote">🔒 Candado local: tus datos se guardan en este dispositivo.</div>
+      <div class="authnote">🔒 Acceso privado con código de invitación · datos en la nube.</div>
     </div>
   </div>
 
@@ -457,6 +457,7 @@
 <script>
 (function(){
   "use strict";
+  try{document.documentElement.setAttribute("data-theme","dark");}catch(e){}
   var LEGACY_KEY="waritos-fitness-v3";
   var SESSKEY="waritos-sess-v1", DATA_PREFIX="wf-data::";
   function getAuth(){try{return JSON.parse(localStorage.getItem(SESSKEY))||{current:null};}catch(e){return {current:null};}}
@@ -1097,7 +1098,7 @@
   }
 
   /* ===== THEME / RESET ===== */
-  function applyTheme(){if(S.theme)document.documentElement.setAttribute("data-theme",S.theme);else document.documentElement.removeAttribute("data-theme");}
+  function applyTheme(){document.documentElement.setAttribute("data-theme",(S&&S.theme)?S.theme:"dark");}
   $("#themeBtn").onclick=function(){var cur=document.documentElement.getAttribute("data-theme");var dark=cur?cur==="dark":window.matchMedia("(prefers-color-scheme: dark)").matches;S.theme=dark?"light":"dark";save();applyTheme();};
   $("#resetBtn").onclick=function(){if(confirm("Esto borra tus registros y restaura los planes de fábrica (solo de tu usuario). ¿Continuar?")){localStorage.removeItem(currentKey());load();applyTheme();go("hoy");toast("Datos reiniciados");}};
 
