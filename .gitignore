@@ -1,7 +1,7 @@
 .claude/
 scratchpad/
 *.tmp
-logo-original.jpeg
+*.jpeg
 logo-cut.png
 logo-full.png
 logo-warito.png
@@ -12,4 +12,11 @@ logo_noplate.png
 logo_warito_hd.png
 logo_cdr_preview.png
 logo_zip/
+newlogo.svg
+newlogo.png
+logo_preview_dark.png
+wf_src.png
+wf_cut.png
+wf_preview.png
+fonts_dl/
 *.py
