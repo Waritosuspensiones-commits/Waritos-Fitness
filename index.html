@@ -447,6 +447,7 @@
       <div class="authusers" id="authUsers"></div>
       <input id="authUser" class="authinput" type="text" placeholder="Usuario" autocapitalize="none" autocomplete="username"/>
       <input id="authPass" class="authinput" type="password" placeholder="Contraseña" autocomplete="current-password"/>
+      <input id="authCode" class="authinput" type="text" placeholder="Código de invitación" autocapitalize="characters" style="display:none"/>
       <div class="autherr" id="authErr"></div>
       <button class="btn primary" id="authSubmit">Entrar</button>
       <div class="authtoggle"><span id="authToggleTxt">¿No tenés cuenta?</span> <a id="authToggle">Crear una</a></div>
@@ -462,9 +463,9 @@
 (function(){
   "use strict";
   var LEGACY_KEY="waritos-fitness-v3";
-  var AUTHKEY="waritos-auth", DATA_PREFIX="wf-data::";
-  function getAuth(){try{return JSON.parse(localStorage.getItem(AUTHKEY))||{users:{},current:null};}catch(e){return {users:{},current:null};}}
-  function setAuth(a){try{localStorage.setItem(AUTHKEY,JSON.stringify(a));}catch(e){}}
+  var SESSKEY="waritos-sess-v1", DATA_PREFIX="wf-data::";
+  function getAuth(){try{return JSON.parse(localStorage.getItem(SESSKEY))||{current:null};}catch(e){return {current:null};}}
+  function setAuth(a){try{localStorage.setItem(SESSKEY,JSON.stringify(a));}catch(e){}}
   function currentKey(){return DATA_PREFIX+(getAuth().current||"_guest");}
   var DOW=["dom","lun","mar","mie","jue","vie","sab"];
   var DOWALL=["lun","mar","mie","jue","vie","sab","dom"];
@@ -1084,58 +1085,57 @@
     return Promise.resolve("x"+h.toString(16));
   }
   function renderAuthMode(){
-    var a=getAuth(), users=Object.keys(a.users);
     if(authMode==="register"){
       $("#authTitle").textContent="Creá tu cuenta";
-      $("#authSub").textContent="Elegí un usuario y contraseña para tu perfil";
+      $("#authSub").textContent="Necesitás el código de invitación de Warito";
       $("#authSubmit").textContent="Crear cuenta";
       $("#authToggleTxt").textContent="¿Ya tenés cuenta?";
       $("#authToggle").textContent="Iniciar sesión";
-      $("#authPass").setAttribute("autocomplete","new-password");
+      $("#authCode").style.display="";
     }else{
       $("#authTitle").textContent="Iniciá sesión";
-      $("#authSub").textContent="Ingresá con tu usuario para ver tu plan";
+      $("#authSub").textContent="Ingresá con tu usuario y contraseña";
       $("#authSubmit").textContent="Entrar";
       $("#authToggleTxt").textContent="¿No tenés cuenta?";
       $("#authToggle").textContent="Crear una";
-      $("#authPass").setAttribute("autocomplete","current-password");
+      $("#authCode").style.display="none";
     }
-    var uw=$("#authUsers");uw.innerHTML="";
-    if(authMode==="login"&&users.length){
-      users.forEach(function(u){var c=el("button","userchip","👤 "+u);c.onclick=function(){$("#authUser").value=u;$("#authPass").value="";$("#authPass").focus();};uw.appendChild(c);});
-    }
-    $("#authErr").textContent="";
+    $("#authUsers").innerHTML="";$("#authErr").textContent="";
   }
-  function showAuth(){authMode=Object.keys(getAuth().users).length?"login":"register";renderAuthMode();$("#authScreen").style.display="flex";}
-  function enterApp(){$("#authScreen").style.display="none";$("#authUser").value="";$("#authPass").value="";bootApp();}
+  function showAuth(){authMode="login";renderAuthMode();$("#authScreen").style.display="flex";}
+  function enterApp(){$("#authScreen").style.display="none";$("#authUser").value="";$("#authPass").value="";$("#authCode").value="";bootApp();}
   function logout(){leavePresence();var a=getAuth();a.current=null;setAuth(a);showAuth();}
   $("#authToggle").onclick=function(){authMode=authMode==="login"?"register":"login";renderAuthMode();};
   $("#logoutBtn").onclick=logout;
   function doAuth(){
-    var u=$("#authUser").value.trim().toLowerCase(), p=$("#authPass").value, a=getAuth();
+    var u=$("#authUser").value.trim().toLowerCase(), p=$("#authPass").value, code=$("#authCode").value.trim();
     if(!u||!p){$("#authErr").textContent="Completá usuario y contraseña";return;}
+    var c=initSupabase();
+    if(!c){$("#authErr").textContent="Sin conexión con el servidor. Revisá tu internet.";return;}
+    $("#authErr").textContent="Conectando…";$("#authSubmit").disabled=true;
+    var fin=function(){$("#authSubmit").disabled=false;};
+    var onLogged=function(){
+      if(localStorage.getItem(LEGACY_KEY) && !localStorage.getItem(DATA_PREFIX+u)){localStorage.setItem(DATA_PREFIX+u,localStorage.getItem(LEGACY_KEY));}
+      setAuth({current:u});enterApp();
+    };
+    var handle=function(res){
+      fin();
+      if(res.error){$("#authErr").textContent="Error del servidor. Probá de nuevo.";return;}
+      var r=res.data||"";
+      if(r==="OK"){onLogged();if(authMode==="register")toast("¡Bienvenido, "+u+"! 💪");}
+      else{$("#authErr").textContent=r.replace(/^ERR:/,"");}
+    };
+    var fail=function(){fin();$("#authErr").textContent="No se pudo conectar. Revisá tu internet.";};
     if(authMode==="register"){
-      if(u.length<3){$("#authErr").textContent="El usuario debe tener 3+ caracteres";return;}
-      if(p.length<4){$("#authErr").textContent="La contraseña debe tener 4+ caracteres";return;}
-      if(a.users[u]){$("#authErr").textContent="Ese usuario ya existe";return;}
-      var salt=randSalt();
-      hashPass(p,salt).then(function(hash){
-        a.users[u]={salt:salt,hash:hash};
-        if(Object.keys(a.users).length===1 && localStorage.getItem(LEGACY_KEY) && !localStorage.getItem(DATA_PREFIX+u)){
-          localStorage.setItem(DATA_PREFIX+u, localStorage.getItem(LEGACY_KEY)); // migrar datos previos al 1er usuario
-        }
-        a.current=u; setAuth(a); enterApp(); toast("¡Bienvenido, "+u+"! 💪");
-      });
+      if(!code){$("#authErr").textContent="Necesitás el código de invitación";fin();return;}
+      c.rpc("register_with_code",{p_user:u,p_pass:p,p_code:code}).then(handle).catch(fail);
     }else{
-      if(!a.users[u]){$("#authErr").textContent="Usuario no encontrado";return;}
-      hashPass(p,a.users[u].salt).then(function(hash){
-        if(hash!==a.users[u].hash){$("#authErr").textContent="Contraseña incorrecta";return;}
-        a.current=u; setAuth(a); enterApp();
-      });
+      c.rpc("login_user",{p_user:u,p_pass:p}).then(handle).catch(fail);
     }
   }
   $("#authSubmit").onclick=doAuth;
   $("#authPass").addEventListener("keydown",function(e){if(e.key==="Enter")doAuth();});
+  $("#authCode").addEventListener("keydown",function(e){if(e.key==="Enter")doAuth();});
   function updateUserBadge(){$("#curUser").textContent=getAuth().current||"—";}
 
   /* ===== SUPABASE: CONECTADOS AHORA (presencia en tiempo real) ===== */
@@ -1178,8 +1178,7 @@
     if("Notification" in window && Notification.permission==="granted"){scheduleNotifs();$("#notifBtn").textContent="🔔 Avisos activados";}
     joinPresence(getAuth().current);
   }
-  var _a0=getAuth();
-  if(_a0.current && _a0.users[_a0.current]) enterApp(); else showAuth();
+  if(getAuth().current) enterApp(); else showAuth();
 })();
 </script></body>
 </html>
