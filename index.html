@@ -259,6 +259,11 @@
   .codechip{font-family:inherit;background:var(--teal-soft);color:var(--teal);border:1px solid var(--teal);border-radius:9px;padding:8px 12px;font-weight:800;font-size:14px;letter-spacing:1px;cursor:pointer;font-variant-numeric:tabular-nums;}
   .codechip:active{transform:scale(.96);}
   .rstpw{width:auto;padding:6px 11px;font-size:12px;margin-top:10px;}
+  .wk{width:100%;border-collapse:collapse;font-size:12.5px;}
+  .wk th,.wk td{padding:8px 6px;text-align:center;border-bottom:1px solid var(--line-soft);white-space:nowrap;}
+  .wk th{color:var(--faint);text-transform:uppercase;font-size:10px;letter-spacing:.5px;font-weight:700;}
+  .wk td:first-child,.wk th:first-child{text-align:left;font-weight:700;}
+  .wk tr:last-child td{border-bottom:none;}
   .selflat{width:100%;background:var(--surface-2);border:1px solid var(--line);border-radius:11px;color:var(--text);padding:11px 12px;font-size:14px;font-family:inherit;font-weight:700;-webkit-appearance:none;appearance:none;margin:4px 0 4px;background-image:linear-gradient(45deg,transparent 50%,var(--muted) 50%),linear-gradient(135deg,var(--muted) 50%,transparent 50%);background-position:calc(100% - 18px) 50%,calc(100% - 13px) 50%;background-size:5px 5px,5px 5px;background-repeat:no-repeat;}
   #printArea{display:none;}
   @media print{
@@ -318,6 +323,19 @@
         <button class="btn teal sm" style="width:auto;padding:0 18px" id="bwSaveHoy">Guardar</button>
       </div>
       <div class="note" id="bwHoyNote" style="margin-top:8px"></div>
+    </div>
+
+    <div class="card">
+      <div class="h3">📋 Registro del día</div>
+      <div class="row between" style="margin-top:12px">
+        <div><div style="font-size:14px;font-weight:700">🔥 Calentamiento</div><div class="note" style="margin:0">5 minutos antes de entrenar</div></div>
+        <button class="check" id="warmupChk"></button>
+      </div>
+      <div class="field" style="margin-top:12px">
+        <input id="sleepInput" type="number" inputmode="decimal" placeholder="😴 Horas que dormiste anoche"/>
+        <button class="btn teal sm" style="width:auto;padding:0 16px" id="sleepSave">Guardar</button>
+      </div>
+      <div class="note" id="dailyNote" style="margin-top:8px"></div>
     </div>
 
     <div class="row between" style="margin:18px 4px 8px"><div class="h3">Comidas de hoy</div><div class="pill teal" id="mealAdh">0%</div></div>
@@ -383,6 +401,11 @@
       <select id="exSel" class="selflat"></select>
       <svg class="spark" id="exSpark" viewBox="0 0 320 60" preserveAspectRatio="none" style="height:60px"></svg>
       <div class="note" id="exNote" style="margin-top:4px"></div>
+    </div>
+    <div class="card">
+      <div class="h3" style="margin-bottom:8px">Resumen semanal</div>
+      <div class="stat-grid" id="wkStats" style="margin-bottom:12px"></div>
+      <div style="overflow-x:auto"><table class="wk" id="wkTable"></table></div>
     </div>
     <div class="card"><div class="h3" style="margin-bottom:6px">Historial de sesiones</div><div id="sessList"></div></div>
     <div class="card">
@@ -741,7 +764,7 @@
       var dp=defaultProfile();
       S={meals:seedMeals(),workouts:genRoutine(dp),profile:dp,mealLogs:{},sessions:[],bw:[],water:{},theme:null};
     }
-    S.mealLogs=S.mealLogs||{};S.sessions=S.sessions||[];S.bw=S.bw||[];S.water=S.water||{};S.profile=S.profile||defaultProfile();S.prefs=S.prefs||{diet:"omnivoro",avoid:""};
+    S.mealLogs=S.mealLogs||{};S.sessions=S.sessions||[];S.bw=S.bw||[];S.water=S.water||{};S.profile=S.profile||defaultProfile();S.prefs=S.prefs||{diet:"omnivoro",avoid:""};S.daily=S.daily||{};
     save();
   }
   function save(){try{localStorage.setItem(currentKey(),JSON.stringify(S));}catch(e){} scheduleCloudSave();}
@@ -784,6 +807,7 @@
     }
     renderWater();
     renderBwHoy();
+    renderDaily();
     var dk=dowKey(), meals=S.meals[dk]||[], log=S.mealLogs[todayKey()]||{};
     var wrap=$("#hoyMeals");wrap.innerHTML="";
     meals.forEach(function(m){
@@ -805,6 +829,21 @@
   $("#waterGlass").onclick=function(){addWater(GLASS);};
   $("#waterBottle").onclick=function(){addWater(BOTTLE);};
   $("#waterMinus").onclick=function(){addWater(-GLASS);};
+
+  /* ===== REGISTRO DIARIO (calentamiento + sueño) ===== */
+  function dayLog(dk){dk=dk||todayKey();S.daily=S.daily||{};S.daily[dk]=S.daily[dk]||{};return S.daily[dk];}
+  function renderDaily(){
+    var d=dayLog(todayKey());
+    var chk=$("#warmupChk"); chk.className="check"+(d.warmup?" on":""); chk.textContent=d.warmup?"✓":"";
+    if(document.activeElement!==$("#sleepInput"))$("#sleepInput").value=(d.sleep!=null?d.sleep:"");
+    var parts=[];
+    if(d.warmup)parts.push("calentamiento ✓");
+    if(d.sleep!=null)parts.push(d.sleep+"h de sueño");
+    if(d.trainMin)parts.push(d.trainMin+" min de entreno");
+    $("#dailyNote").textContent=parts.length?("Hoy: "+parts.join(" · ")):"Marcá tu calentamiento y cargá tus horas de sueño 👆";
+  }
+  $("#warmupChk").onclick=function(){var d=dayLog();d.warmup=!d.warmup;save();renderDaily();};
+  $("#sleepSave").onclick=function(){var v=parseFloat($("#sleepInput").value);var d=dayLog();d.sleep=isNaN(v)?null:Math.round(v*10)/10;save();renderDaily();toast("Sueño registrado 😴");};
 
   /* ===== NUTRICION ===== */
   var nutriSel=dowKey();
@@ -880,7 +919,15 @@
       }
       c.appendChild(card);
     });
-    if(isToday&&sess){var fin=el("button","btn teal","Finalizar y guardar entreno ✓");fin.style.marginTop="6px";fin.onclick=function(){save();toast("Entreno guardado 💪");go("prog");};c.appendChild(fin);}
+    if(isToday&&sess){
+      var suggested=dayLog(todayKey()).trainMin||(sess.startAt?Math.max(1,Math.round((Date.now()-sess.startAt)/60000)):"");
+      var durWrap=el("div","field");durWrap.style.marginBottom="8px";
+      var durIn=mkInput(suggested,"⏱️ ¿Cuántos minutos entrenaste?");durIn.id="trainMinInput";
+      durWrap.appendChild(durIn);c.appendChild(durWrap);
+      var fin=el("button","btn teal","Finalizar y guardar entreno ✓");
+      fin.onclick=function(){var v=parseInt($("#trainMinInput").value,10);if(v>0)dayLog(todayKey()).trainMin=v;save();toast("Entreno guardado 💪");go("prog");};
+      c.appendChild(fin);
+    }
     else if(!isToday){c.appendChild(el("p","note","Cambiá al día de hoy para registrar series en vivo. Este es el plan de "+DOWLABEL[entSel]+" con los músculos que trabaja cada ejercicio."));}
   }
   function shortDate(dk){var d=new Date(dk+"T12:00");return d.toLocaleDateString("es-ES",{day:"numeric",month:"short"});}
@@ -898,7 +945,7 @@
 
   /* ===== SESSIONS ===== */
   function sessionFor(dk){for(var i=0;i<S.sessions.length;i++)if(S.sessions[i].date===dk)return S.sessions[i];return null;}
-  function startSession(){var dk=todayKey(),tk=trainingDow();if(!tk||sessionFor(dk))return;S.sessions.push({date:dk,dow:tk,name:S.workouts[tk].name,focus:S.workouts[tk].focus,sets:[]});save();renderEnt();renderHoy();}
+  function startSession(){var dk=todayKey(),tk=trainingDow();if(!tk||sessionFor(dk))return;S.sessions.push({date:dk,dow:tk,name:S.workouts[tk].name,focus:S.workouts[tk].focus,sets:[],startAt:Date.now()});save();renderEnt();renderHoy();}
   function deleteSession(dk){S.sessions=S.sessions.filter(function(s){return s.date!==dk;});save();}
   function findSet(sess,key){for(var i=0;i<sess.sets.length;i++)if(sess.sets[i].key===key)return sess.sets[i];return null;}
   function upsertSet(sess,rec){var f=findSet(sess,rec.key);if(f){f.weight=rec.weight;f.reps=rec.reps;f.rpe=rec.rpe;f.done=rec.done;f.exName=rec.exName;}else{sess.sets.push(rec);}save();}
@@ -932,6 +979,7 @@
     if(bw.length){var last=bw[bw.length-1];$("#stBw").innerHTML=last.kg+"<small> kg</small>";if(bw.length>1){var d=last.kg-bw[0].kg;$("#bwDelta").textContent=(d>=0?"+":"")+d.toFixed(1)+" kg";$("#bwDelta").className="pill "+(d>0?"warn":"teal");}else $("#bwDelta").textContent="—";}else{$("#stBw").textContent="—";$("#bwDelta").textContent="—";}
     drawSpark(bw.map(function(x){return x.kg;}));
     renderExProgress();
+    renderWeekly();
     var list=$("#sessList");list.innerHTML="";
     var recent=S.sessions.slice().reverse().slice(0,12);
     if(!recent.length)list.appendChild(el("div","empty","Todavía no registraste sesiones. Empezá tu primer entreno en la pestaña Entreno."));
@@ -945,6 +993,40 @@
     var d=pts.map(function(p,i){return (i?"L":"M")+p[0].toFixed(1)+" "+p[1].toFixed(1);}).join(" ");
     var area=d+" L"+pts[pts.length-1][0].toFixed(1)+" "+h+" L"+pts[0][0].toFixed(1)+" "+h+" Z";
     svg.innerHTML='<path d="'+area+'" fill="var(--teal-soft)"/><path d="'+d+'" fill="none" stroke="var(--teal)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="'+pts[pts.length-1][0].toFixed(1)+'" cy="'+pts[pts.length-1][1].toFixed(1)+'" r="3.5" fill="var(--teal)"/>';
+  }
+  function weeklyStats(D){
+    var trains=0,trainMin=0,water=0,sleeps=[],today=new Date();
+    for(var i=0;i<7;i++){
+      var dt=new Date(today);dt.setDate(today.getDate()-i);var dk=todayKey(dt);
+      var dl=(D.daily&&D.daily[dk])||{};
+      if(D.water&&D.water[dk])water+=D.water[dk];
+      if(dl.sleep!=null)sleeps.push(dl.sleep);
+      if(dl.trainMin)trainMin+=dl.trainMin;
+      (D.sessions||[]).forEach(function(s){if(s.date===dk){var has=false;s.sets.forEach(function(st){if(st.done)has=true;});if(has)trains++;}});
+    }
+    return {trains:trains,trainMin:trainMin,water:water,avgSleep:sleeps.length?(Math.round(sleeps.reduce(function(a,b){return a+b;},0)/sleeps.length*10)/10):null};
+  }
+  function renderWeekly(){
+    var tbl=$("#wkTable");if(!tbl)return;
+    var w=weeklyStats(S);
+    $("#wkStats").innerHTML=
+      '<div class="stat"><div class="k">Entrenamientos</div><div class="v tnum">'+w.trains+'</div></div>'+
+      '<div class="stat"><div class="k">Tiempo entrenado</div><div class="v tnum">'+w.trainMin+'<small> min</small></div></div>'+
+      '<div class="stat"><div class="k">Sueño promedio</div><div class="v tnum">'+(w.avgSleep!=null?w.avgSleep:"—")+'<small> h</small></div></div>'+
+      '<div class="stat"><div class="k">Agua total</div><div class="v tnum">'+(w.water/1000).toFixed(1)+'<small> L</small></div></div>';
+    var rows='<tr><th>Día</th><th>Entreno</th><th>Agua</th><th>Sueño</th><th>Cal.</th></tr>',today=new Date();
+    for(var i=6;i>=0;i--){
+      var dt=new Date(today);dt.setDate(today.getDate()-i);var dk=todayKey(dt);
+      var dl=(S.daily&&S.daily[dk])||{},trained=false;
+      S.sessions.forEach(function(s){if(s.date===dk){s.sets.forEach(function(st){if(st.done)trained=true;});}});
+      var ent=trained?(dl.trainMin?("✓ "+dl.trainMin+"m"):"✓"):"—";
+      var wa=(S.water&&S.water[dk])?(Math.round(S.water[dk]/100)/10+"L"):"—";
+      var sl=(dl.sleep!=null)?(dl.sleep+"h"):"—";
+      var ca=dl.warmup?"🔥":"—";
+      var lbl=capitalize(dt.toLocaleDateString("es-ES",{weekday:"short",day:"numeric"}));
+      rows+='<tr><td>'+lbl+'</td><td>'+ent+'</td><td class="tnum">'+wa+'</td><td class="tnum">'+sl+'</td><td>'+ca+'</td></tr>';
+    }
+    tbl.innerHTML=rows;
   }
   function saveBodyweight(v){
     if(!v||v<=0){toast("Ingresá un peso válido");return false;}
@@ -1059,7 +1141,9 @@
       '<span class="pill teal tnum">'+bw+'</span>'+
       (p.kcal?'<span class="pill tnum">~'+p.kcal+' kcal</span>':'')+
       '<span class="pill tnum">'+sess.length+' sesiones</span></div>';
-    var routine='<div class="note" style="margin-top:8px"><b>Última rutina:</b> '+lastTxt+'</div>';
+    var wk=weeklyStats(d);
+    var wkLine='<div class="note" style="margin-top:6px"><b>Últ. 7 días:</b> '+wk.trains+' entrenos · '+wk.trainMin+' min · '+(wk.avgSleep!=null?wk.avgSleep+"h sueño":"sin sueño")+' · '+(wk.water/1000).toFixed(1)+'L agua</div>';
+    var routine='<div class="note" style="margin-top:6px"><b>Última rutina:</b> '+lastTxt+'</div>'+wkLine;
     var mealTxt="";
     try{var dowk=["dom","lun","mar","mie","jue","vie","sab"][new Date().getDay()];var ml=(d.meals&&d.meals[dowk])||[];if(ml.length)mealTxt='<div class="note" style="margin-top:4px"><b>Come hoy:</b> '+ml.map(function(m){return m.time+" "+m.name;}).join(" · ")+'</div>';}catch(e){}
     return '<div class="card">'+head+reg+pills+routine+mealTxt+rst+'</div>';
