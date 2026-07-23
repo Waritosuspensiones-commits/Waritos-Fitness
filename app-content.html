@@ -759,8 +759,8 @@
   /* ===== HOY ===== */
   function renderHoy(){
     var now=new Date();
-    $("#todayLabel").textContent=esDate.format(now);
-    $("#hoyTitle").textContent=capitalize(now.toLocaleDateString("es-ES",{weekday:"long"}))+" 💪";
+    $("#todayLabel").textContent=capitalize(now.toLocaleDateString("es-ES",{weekday:"long"}))+" · "+esDate.format(now).replace(/^[^,]*,\s*/,"");
+    $("#hoyTitle").textContent="¡Hola, "+capitalize(getAuth().current||"")+"! 💪";
     var tk=trainingDow(), ring=$("#wkRing"); ring.classList.remove("teal");
     if(tk){
       var w=S.workouts[tk], sess=sessionFor(todayKey()), totalSets=0,doneSets=0;
