@@ -40,9 +40,10 @@
     background-size:100% 100%, 20px 20px, 20px 20px, 20px 20px, 20px 20px, 20px 20px, 20px 20px;
     background-position:0 0, 0 5px, 10px 0px, 0px 10px, 10px 5px, 0 0, 0 0;}
 
-  .top{position:sticky;top:0;z-index:30;padding:16px 18px 12px;
-    background:linear-gradient(var(--ground) 70%, transparent);
+  .top{position:sticky;top:0;z-index:30;padding:calc(20px + env(safe-area-inset-top,0px)) 18px 12px;
+    background:linear-gradient(var(--ground) 74%, transparent);
     display:flex;align-items:center;justify-content:space-between;gap:10px;}
+  .icon-btn{width:42px;height:42px;}
   .brand{display:flex;align-items:center;gap:11px;}
   .logo{width:40px;height:40px;border-radius:13px;flex:none;background:linear-gradient(150deg,#22314c,#131c2b);border:1px solid #ffffff16;display:grid;place-items:center;box-shadow:0 8px 18px -8px #000, inset 0 1px 0 #ffffff12;}
   .logo svg{width:24px;height:24px;stroke:var(--ember);fill:none;stroke-width:2.1;stroke-linecap:round;stroke-linejoin:round;}
@@ -242,6 +243,12 @@
   .hstep{margin-bottom:13px;}
   .hstep .h3{color:var(--ember);font-size:14px;margin-bottom:2px;}
   .hstep .note{margin-top:0;color:var(--muted);}
+  .swatches{display:flex;gap:12px;flex-wrap:wrap;margin-top:10px;}
+  .sw{width:46px;height:46px;border-radius:50%;cursor:pointer;border:3px solid var(--line);position:relative;}
+  .sw.on{border-color:var(--text);box-shadow:0 0 0 3px var(--surface),0 0 0 5px currentColor;}
+  .sw.on::after{content:"✓";position:absolute;inset:0;display:grid;place-items:center;color:#fff;font-weight:800;font-size:18px;}
+  .swlabel{font-size:10px;color:var(--faint);text-transform:capitalize;text-align:center;margin-top:3px;font-weight:700;}
+  .swwrap{display:flex;flex-direction:column;align-items:center;}
   .selflat{width:100%;background:var(--surface-2);border:1px solid var(--line);border-radius:11px;color:var(--text);padding:11px 12px;font-size:14px;font-family:inherit;font-weight:700;-webkit-appearance:none;appearance:none;margin:4px 0 4px;background-image:linear-gradient(45deg,transparent 50%,var(--muted) 50%),linear-gradient(135deg,var(--muted) 50%,transparent 50%);background-position:calc(100% - 18px) 50%,calc(100% - 13px) 50%;background-size:5px 5px,5px 5px;background-repeat:no-repeat;}
   #printArea{display:none;}
   @media print{
@@ -495,6 +502,17 @@
       <div class="hstep"><div class="h3">🔥 6. Entrenar</div><div class="note">Entreno → "Empezar sesión". Anotá peso y reps, marcá ✓ cada serie (arranca el timer). Al final, cuántos minutos entrenaste.</div></div>
       <div class="hstep"><div class="h3">📋 7. Cada día (en "Hoy")</div><div class="note">Cargá agua 💧, peso ⚖️, calentamiento 🔥, horas de sueño 😴 y marcá ✓ las comidas.</div></div>
       <div class="hstep"><div class="h3">📈 8. Ver tu progreso</div><div class="note">Progreso: tu peso, el progreso por ejercicio y el resumen de la semana.</div></div>
+    </div>
+  </div>
+
+  <!-- MODAL APARIENCIA -->
+  <div class="modal" id="themeModal">
+    <div class="sheet">
+      <div class="sheet-h"><div class="h3">Apariencia</div><button class="icon-btn" id="themeClose">✕</button></div>
+      <div class="h3" style="margin-top:12px">Modo</div>
+      <div class="seg" id="modeSeg" style="margin-top:8px"><button data-v="dark">🌙 Oscuro</button><button data-v="light">☀️ Claro</button></div>
+      <div class="h3" style="margin-top:18px">Color</div>
+      <div class="swatches" id="swatches"></div>
     </div>
   </div>
 
@@ -762,7 +780,7 @@
       var dp=defaultProfile();
       S={meals:seedMeals(),workouts:genRoutine(dp),profile:dp,mealLogs:{},sessions:[],bw:[],water:{},theme:null};
     }
-    S.mealLogs=S.mealLogs||{};S.sessions=S.sessions||[];S.bw=S.bw||[];S.water=S.water||{};S.profile=S.profile||defaultProfile();S.prefs=S.prefs||{diet:"omnivoro",avoid:""};S.daily=S.daily||{};S.apodo=S.apodo||"";
+    S.mealLogs=S.mealLogs||{};S.sessions=S.sessions||[];S.bw=S.bw||[];S.water=S.water||{};S.profile=S.profile||defaultProfile();S.prefs=S.prefs||{diet:"omnivoro",avoid:""};S.daily=S.daily||{};S.apodo=S.apodo||"";S.accent=S.accent||"naranja";
     save();
   }
   function save(){try{localStorage.setItem(currentKey(),JSON.stringify(S));}catch(e){} scheduleCloudSave();}
@@ -1259,7 +1277,37 @@
 
   /* ===== THEME / RESET ===== */
   function applyTheme(){document.documentElement.setAttribute("data-theme",(S&&S.theme)?S.theme:"dark");}
-  $("#themeBtn").onclick=function(){var cur=document.documentElement.getAttribute("data-theme");var dark=cur?cur==="dark":window.matchMedia("(prefers-color-scheme: dark)").matches;S.theme=dark?"light":"dark";save();applyTheme();};
+  var ACCENTS={
+    naranja:{m:"#ff6b3d",l:"#ff9b73",d:"#c94a24"},
+    rosado:{m:"#ff5d9e",l:"#ff92c0",d:"#c93a72"},
+    azul:{m:"#3b82f6",l:"#7aa8ff",d:"#1d5fd0"},
+    violeta:{m:"#8b5cf6",l:"#b49bfb",d:"#6a3fd0"},
+    celeste:{m:"#22c3e6",l:"#74dcf2",d:"#0f93b3"}
+  };
+  function applyAccent(){
+    var a=ACCENTS[(S&&S.accent)||"naranja"]||ACCENTS.naranja, r=document.documentElement.style;
+    r.setProperty("--ember",a.m);r.setProperty("--ember-2",a.l);r.setProperty("--ember-deep",a.d);
+    r.setProperty("--ember-soft",a.m+"22");r.setProperty("--glow-a",a.m+"2b");
+  }
+  function renderSwatches(){
+    var w=$("#swatches");w.innerHTML="";var cur=(S&&S.accent)||"naranja";
+    Object.keys(ACCENTS).forEach(function(k){
+      var wrap=el("div","swwrap");
+      var b=el("div","sw"+(k===cur?" on":""));b.style.background=ACCENTS[k].m;b.style.color=ACCENTS[k].m;
+      b.onclick=function(){S.accent=k;save();applyAccent();renderSwatches();};
+      var lb=el("div","swlabel",k);
+      wrap.appendChild(b);wrap.appendChild(lb);w.appendChild(wrap);
+    });
+  }
+  function openTheme(){
+    var th=(S&&S.theme)||"dark";
+    document.querySelectorAll("#modeSeg button").forEach(function(b){b.classList.toggle("on",b.dataset.v===th);});
+    renderSwatches();$("#themeModal").classList.add("on");
+  }
+  document.querySelectorAll("#modeSeg button").forEach(function(b){b.onclick=function(){S.theme=b.dataset.v;save();applyTheme();document.querySelectorAll("#modeSeg button").forEach(function(x){x.classList.toggle("on",x===b);});};});
+  $("#themeBtn").onclick=openTheme;
+  $("#themeClose").onclick=function(){$("#themeModal").classList.remove("on");};
+  $("#themeModal").onclick=function(e){if(e.target===this)this.classList.remove("on");};
   $("#resetBtn").onclick=function(){if(confirm("Esto borra tus registros y restaura los planes de fábrica (solo de tu usuario). ¿Continuar?")){localStorage.removeItem(currentKey());load();applyTheme();go("hoy");toast("Datos reiniciados");}};
 
   /* ===== AUTENTICACIÓN (local) ===== */
@@ -1397,7 +1445,7 @@
 
   /* ===== ARRANQUE ===== */
   function bootApp(){
-    load();applyTheme();updateUserBadge();go("hoy");
+    load();applyTheme();applyAccent();updateUserBadge();go("hoy");
     if("Notification" in window && Notification.permission==="granted"){scheduleNotifs();$("#notifBtn").textContent="🔔 Avisos activados";}
     joinPresence(getAuth().current);
     checkAdmin();
