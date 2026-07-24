@@ -256,6 +256,9 @@
   .wk th{color:var(--faint);text-transform:uppercase;font-size:10px;letter-spacing:.5px;font-weight:700;}
   .wk td:first-child,.wk th:first-child{text-align:left;font-weight:700;}
   .wk tr:last-child td{border-bottom:none;}
+  .hstep{margin-bottom:13px;}
+  .hstep .h3{color:var(--ember);font-size:14px;margin-bottom:2px;}
+  .hstep .note{margin-top:0;color:var(--muted);}
   .selflat{width:100%;background:var(--surface-2);border:1px solid var(--line);border-radius:11px;color:var(--text);padding:11px 12px;font-size:14px;font-family:inherit;font-weight:700;-webkit-appearance:none;appearance:none;margin:4px 0 4px;background-image:linear-gradient(45deg,transparent 50%,var(--muted) 50%),linear-gradient(135deg,var(--muted) 50%,transparent 50%);background-position:calc(100% - 18px) 50%,calc(100% - 13px) 50%;background-size:5px 5px,5px 5px;background-repeat:no-repeat;}
   #printArea{display:none;}
   @media print{
@@ -280,7 +283,10 @@
         <img src="logo.png" alt="Warito Fitness" />
       </div>
     </div>
-    <button class="icon-btn" id="themeBtn" title="Tema">◐</button>
+    <div class="row" style="gap:8px">
+      <button class="icon-btn" id="helpBtn" title="Cómo usar">?</button>
+      <button class="icon-btn" id="themeBtn" title="Tema">◐</button>
+    </div>
   </header>
 
   <!-- HOY -->
@@ -490,6 +496,22 @@
       <div class="h3">Usuarios</div>
       <p class="note" style="margin-top:2px">Rutina, comidas, peso y sesiones de cada uno. Las contraseñas están encriptadas (no se pueden ver); si alguien la olvida, reseteala.</p>
       <div id="adminList" style="margin-top:8px"></div>
+    </div>
+  </div>
+
+  <!-- MODAL CÓMO USAR -->
+  <div class="modal" id="helpModal">
+    <div class="sheet">
+      <div class="sheet-h"><div class="h3">Cómo usar la app</div><button class="icon-btn" id="helpClose">✕</button></div>
+      <a class="btn primary" href="guia.pdf" target="_blank" rel="noopener" style="margin:10px 0 14px">📄 Descargar la guía en PDF</a>
+      <div class="hstep"><div class="h3">📲 1. Entrar</div><div class="note">Tocá "Crear una", poné usuario, contraseña y el código que te pasó Warito. El código sirve una sola vez.</div></div>
+      <div class="hstep"><div class="h3">⭐ 2. Tu apodo</div><div class="note">Progreso → "Tu apodo" → escribí cómo querés que te llame la app. Tu usuario para entrar no cambia.</div></div>
+      <div class="hstep"><div class="h3">📱 3. Ponerla en el celu</div><div class="note">iPhone (Safari): Compartir ⬆️ → "Agregar a inicio". Android (Chrome): ⋮ → "Instalar app". Queda con el ícono WF.</div></div>
+      <div class="hstep"><div class="h3">🏋️ 4. Cambiar la rutina</div><div class="note">Entreno → "⚙️ Generar / cambiar rutina". Poné peso, altura, objetivo, qué trabajar, gimnasio o casa y los días → "Generar".</div></div>
+      <div class="hstep"><div class="h3">🍽️ 5. Cambiar la comida</div><div class="note">Nutrición → "🍽️ Preferencias de comida". Elegí omnívoro/vegetariano/vegano y qué NO comés. El plan se ajusta solo.</div></div>
+      <div class="hstep"><div class="h3">🔥 6. Entrenar</div><div class="note">Entreno → "Empezar sesión". Anotá peso y reps, marcá ✓ cada serie (arranca el timer). Al final, cuántos minutos entrenaste.</div></div>
+      <div class="hstep"><div class="h3">📋 7. Cada día (en "Hoy")</div><div class="note">Cargá agua 💧, peso ⚖️, calentamiento 🔥, horas de sueño 😴 y marcá ✓ las comidas.</div></div>
+      <div class="hstep"><div class="h3">📈 8. Ver tu progreso</div><div class="note">Progreso: tu peso, el progreso por ejercicio y el resumen de la semana.</div></div>
     </div>
   </div>
 
@@ -1186,6 +1208,9 @@
       copyText(d);toast("Código "+d+" generado y copiado ✓");loadAdminCodes();
     }).catch(function(){$("#genCodeBtn").disabled=false;toast("Error de conexión");});
   };
+  $("#helpBtn").onclick=function(){$("#helpModal").classList.add("on");};
+  $("#helpClose").onclick=function(){$("#helpModal").classList.remove("on");};
+  $("#helpModal").onclick=function(e){if(e.target===this)this.classList.remove("on");};
   $("#adminClose").onclick=function(){$("#adminModal").classList.remove("on");};
   $("#adminModal").onclick=function(e){if(e.target===this)this.classList.remove("on");};
   $("#adminBtn").onclick=function(){
