@@ -1002,6 +1002,7 @@
 
   /* ===== PROGRESO ===== */
   function renderProg(){
+    checkAdmin();
     var now=new Date(),ym=now.getFullYear()+"-"+String(now.getMonth()+1).padStart(2,"0");
     var monthSess=S.sessions.filter(function(s){return s.date.indexOf(ym)===0;}),ton=0,doneSess=0;
     monthSess.forEach(function(s){var has=false;s.sets.forEach(function(st){if(st.done){var w=parseFloat(st.weight)||0,r=parseFloat(st.reps)||0;ton+=w*r;if(w*r>0)has=true;}});if(has)doneSess++;});
